@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+pyodbc
+pydantic>=2.0
+pydantic-settings
+python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt<4.1  # passlib 1.7.4 reads bcrypt.__about__, removed in bcrypt>=4.1 - pin until passlib releases a fix
+python-multipart
+pandas

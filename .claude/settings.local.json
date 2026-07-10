@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:\\\\Users\\\\PD-6.MAHADEV\\\\.claude\\\\plans\\\\\" 2>&1 | tail -20)",
+      "Read(//c/Users/PD-6.MAHADEV/.claude/**)"
+    ]
+  }
+}

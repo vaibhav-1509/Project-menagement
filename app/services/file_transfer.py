@@ -1,0 +1,327 @@
+"""Copy-Verify-Delete pipeline for moving a file's folder between stages of the
+Polish -> GLB -> Render pipeline (or any admin-defined ProcessTypes list).
+
+Invariant: the source folder is removed in exactly one place inside
+_copy_verify_delete, and only after the destination copy has been verified.
+Every step is logged to FileTransferLog *before* it is attempted so a crash
+mid-transfer leaves a durable "Transferring" trail a reconciliation job can
+find on restart, instead of an ambiguous half-moved folder.
+
+Two callers drive this pipeline:
+- assign_file_process: admin assigns a (file, process type) to a worker -
+  copies from the file's current location into that worker's Pending folder.
+- complete_process_assignment: a worker finishes their stage - copies from
+  their Pending folder into their own Complete folder, which is where the
+  next stage's assign_file_process call will read the file from next.
+"""
+
+import os
+import shutil
+from dataclasses import dataclass
+from datetime import datetime
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.security import user_is_admin
+
+from app.models import (
+    FileProcessStatus,
+    FileRecord,
+    FileStatus,
+    FileTransferLog,
+    FileVersion,
+    ProcessType,
+    TaskAssignment,
+    User,
+    WorkerProcessPath,
+)
+
+
+class FileLockedError(Exception):
+    pass
+
+
+class TransferVerificationError(Exception):
+    pass
+
+
+@dataclass
+class TransferResult:
+    assignment_id: int
+    dest_path: str
+
+
+def _status_id(db: Session, name: str) -> int:
+    return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == name))
+
+
+def _dir_signature(path: str) -> tuple[int, int]:
+    """(file_count, total_bytes) - cheap integrity check for large SMB trees."""
+    file_count = 0
+    total_bytes = 0
+    for root, _dirs, files in os.walk(path):
+        for f in files:
+            file_count += 1
+            total_bytes += os.path.getsize(os.path.join(root, f))
+    return file_count, total_bytes
+
+
+def _log(db: Session, file_id: int, assignment_id: int | None, source: str, dest: str, step: str, status: str, error: str | None = None):
+    db.add(
+        FileTransferLog(
+            FileID=file_id,
+            AssignmentID=assignment_id,
+            SourcePath=source,
+            DestPath=dest,
+            Step=step,
+            Status=status,
+            ErrorMessage=error,
+        )
+    )
+    db.commit()
+
+
+def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_path: str, dest_path: str) -> None:
+    """Mechanical Copy-Verify-Delete only - raises on failure without touching
+    any FileRecord/TaskAssignment/FileProcessStatus rows. Callers own reverting
+    their own state on exception; this function only ever mutates the filesystem
+    and FileTransferLog."""
+    _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Started")
+
+    try:
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        shutil.copytree(source_path, dest_path)
+    except PermissionError as exc:
+        _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", "File Locked")
+        raise FileLockedError(f"Source folder is locked: {source_path}") from exc
+    except OSError as exc:
+        _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", str(exc))
+        raise
+
+    _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success")
+
+    _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Started")
+    if _dir_signature(source_path) != _dir_signature(dest_path):
+        shutil.rmtree(dest_path, ignore_errors=True)  # only the partial *destination* copy
+        _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Failed", "File count/size mismatch")
+        raise TransferVerificationError("Copy verification failed - source left untouched")
+
+    _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Success")
+
+    try:
+        shutil.rmtree(source_path)
+        _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Success")
+    except OSError as exc:
+        # Destination is already verified - this is a cleanup failure, not data loss.
+        _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Failed", str(exc))
+
+
+def assign_file_process(db: Session, file_id: int, process_type_id: int, target_user_id: int) -> TransferResult:
+    file_record = db.get(FileRecord, file_id)
+    if file_record is None:
+        raise ValueError("File not found")
+
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None or not process_type.IsActive:
+        raise ValueError("Unknown or inactive process type")
+
+    target_user = db.get(User, target_user_id)
+    if target_user is None or not target_user.IsActive:
+        raise ValueError("Target user not found or inactive")
+
+    worker_path = db.scalar(
+        select(WorkerProcessPath).where(
+            WorkerProcessPath.UserID == target_user_id,
+            WorkerProcessPath.ProcessTypeID == process_type_id,
+            WorkerProcessPath.IsActive == True,  # noqa: E712
+        )
+    )
+    if worker_path is None:
+        raise ValueError(
+            f"{target_user.Username} is not enabled for {process_type.ProcessTypeName}, "
+            "or their Pending/Complete folders are not configured"
+        )
+
+    # Stage-order gating: the immediately preceding active process type must be
+    # Complete for this file before this one can be assigned.
+    previous_process_type = db.scalar(
+        select(ProcessType)
+        .where(ProcessType.IsActive == True, ProcessType.SortOrder < process_type.SortOrder)  # noqa: E712
+        .order_by(ProcessType.SortOrder.desc())
+    )
+    complete_status_id = _status_id(db, "Complete")
+    if previous_process_type is not None:
+        previous_status = db.scalar(
+            select(FileProcessStatus).where(
+                FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == previous_process_type.ProcessTypeID
+            )
+        )
+        if previous_status is None or previous_status.StatusID != complete_status_id:
+            raise ValueError(f"{previous_process_type.ProcessTypeName} must be Complete before {process_type.ProcessTypeName} can be assigned")
+
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id)
+    )
+    if stage_status is not None:
+        if stage_status.ActiveAssignmentID is not None:
+            raise ValueError(f"{process_type.ProcessTypeName} already has an active assignment for this file")
+        if stage_status.StatusID == complete_status_id:
+            raise ValueError(f"{process_type.ProcessTypeName} is already Complete for this file")
+
+    source_path = file_record.CurrentPath
+    if not source_path:
+        version = db.get(FileVersion, file_record.CurrentVersionID)
+        if version is None:
+            raise ValueError("File has no known location (no CurrentPath and no version on record)")
+        source_path = version.SourcePath
+
+    dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+
+    transferring_id = _status_id(db, "Transferring")
+    pending_id = _status_id(db, "Pending")
+
+    # --- durability checkpoint, committed before any filesystem I/O ---
+    previous_stage_status_id = stage_status.StatusID if stage_status else pending_id
+    previous_assigned_to = stage_status.AssignedToUserID if stage_status else None
+    previous_failure_reason = stage_status.LastFailureReason if stage_status else None
+
+    assignment = TaskAssignment(
+        FileID=file_id,
+        VersionID=file_record.CurrentVersionID,
+        ProcessTypeID=process_type_id,
+        AssignedToUserID=target_user_id,
+        PhaseID=file_record.PhaseID,
+        StatusID=transferring_id,
+        SourcePath=source_path,
+        DestPath=dest_path,
+        IsActive=True,
+    )
+    db.add(assignment)
+    db.flush()
+
+    if stage_status is None:
+        stage_status = FileProcessStatus(FileID=file_id, ProcessTypeID=process_type_id, StatusID=transferring_id)
+        db.add(stage_status)
+    else:
+        stage_status.StatusID = transferring_id
+    stage_status.AssignedToUserID = target_user_id
+    stage_status.ActiveAssignmentID = assignment.AssignmentID
+    stage_status.StartedTS = datetime.utcnow()
+    stage_status.LastFailureReason = None
+    db.commit()
+    db.refresh(assignment)
+
+    # Reassigning a failed stage back to the same worker (folders never having
+    # moved after a fail - see mark_assignment_failed) means source and
+    # destination are literally the same folder. shutil.copytree can't copy a
+    # directory into itself, and there's nothing to transfer anyway.
+    if os.path.normpath(source_path) != os.path.normpath(dest_path):
+        try:
+            _copy_verify_delete(db, file_id, assignment.AssignmentID, source_path, dest_path)
+        except (FileLockedError, TransferVerificationError, OSError):
+            assignment.IsActive = False
+            stage_status.StatusID = previous_stage_status_id
+            stage_status.AssignedToUserID = previous_assigned_to
+            stage_status.ActiveAssignmentID = None
+            stage_status.LastFailureReason = previous_failure_reason
+            db.commit()
+            raise
+
+    # --- commit the outcome ---
+    file_record.CurrentPath = dest_path
+    file_record.StatusID = pending_id
+    file_record.AssignedToUserID = target_user_id
+    assignment.StatusID = pending_id
+    stage_status.StatusID = pending_id
+    db.commit()
+
+    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path)
+
+
+def complete_process_assignment(db: Session, assignment_id: int, current_user: User) -> TransferResult:
+    assignment = db.get(TaskAssignment, assignment_id)
+    if assignment is None or not assignment.IsActive:
+        raise ValueError("Active assignment not found")
+
+    is_admin = user_is_admin(current_user)
+    if not is_admin and assignment.AssignedToUserID != current_user.UserID:
+        raise PermissionError("This assignment does not belong to you")
+
+    worker_path = db.scalar(
+        select(WorkerProcessPath).where(
+            WorkerProcessPath.UserID == assignment.AssignedToUserID,
+            WorkerProcessPath.ProcessTypeID == assignment.ProcessTypeID,
+        )
+    )
+    if worker_path is None:
+        raise ValueError("Worker's folder configuration for this process type is missing")
+
+    file_record = db.get(FileRecord, assignment.FileID)
+    source_path = file_record.CurrentPath
+    if not source_path:
+        raise ValueError("File has no known current location")
+    dest_path = os.path.join(worker_path.CompletePath, file_record.FileName)
+
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == assignment.FileID, FileProcessStatus.ProcessTypeID == assignment.ProcessTypeID
+        )
+    )
+
+    complete_id = _status_id(db, "Complete")
+
+    try:
+        _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
+    except (FileLockedError, TransferVerificationError, OSError):
+        # Retryable - the assignment stays active/in-progress, nothing reverted.
+        raise
+
+    now = datetime.utcnow()
+    file_record.CurrentPath = dest_path
+    file_record.StatusID = complete_id
+    assignment.StatusID = complete_id
+    assignment.CompletionTS = now
+    assignment.IsActive = False
+    if stage_status is not None:
+        stage_status.StatusID = complete_id
+        stage_status.CompletionTS = now
+        stage_status.ActiveAssignmentID = None
+    db.commit()
+
+    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path)
+
+
+def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current_user: User) -> None:
+    """Worker (or admin) reports they could not finish this stage. No physical
+    file move - the folder stays exactly where it is, same 'no-op on disk'
+    rationale as reset_file. The reason is kept on both the historical
+    TaskAssignments row and the FileProcessStatus summary so whoever picks up
+    the reassignment can see what went wrong and who hit it."""
+    assignment = db.get(TaskAssignment, assignment_id)
+    if assignment is None or not assignment.IsActive:
+        raise ValueError("Active assignment not found")
+
+    is_admin = user_is_admin(current_user)
+    if not is_admin and assignment.AssignedToUserID != current_user.UserID:
+        raise PermissionError("This assignment does not belong to you")
+
+    failed_id = _status_id(db, "Failed")
+    now = datetime.utcnow()
+    assignment.StatusID = failed_id
+    assignment.FailureReason = reason
+    assignment.CompletionTS = now
+    assignment.IsActive = False
+
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == assignment.FileID, FileProcessStatus.ProcessTypeID == assignment.ProcessTypeID
+        )
+    )
+    if stage_status is not None:
+        stage_status.StatusID = failed_id
+        stage_status.LastFailureReason = reason
+        stage_status.ActiveAssignmentID = None
+        # AssignedToUserID is kept (not cleared) so the failing worker stays
+        # visible to whoever reassigns this stage next.
+    db.commit()
