@@ -1,52 +1,52 @@
-# Graph Report - .  (2026-07-09)
+# Graph Report - .  (2026-07-11)
 
 ## Corpus Check
-- 55 files · ~17,714 words
+- 44 files · ~30,448 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 411 nodes · 1150 edges · 21 communities (17 shown, 4 thin omitted)
-- Extraction: 71% EXTRACTED · 29% INFERRED · 0% AMBIGUOUS · INFERRED: 338 edges (avg confidence: 0.52)
-- Token cost: 0 input · 124,619 output
+- 603 nodes · 2010 edges · 21 communities (17 shown, 4 thin omitted)
+- Extraction: 66% EXTRACTED · 34% INFERRED · 0% AMBIGUOUS · INFERRED: 689 edges (avg confidence: 0.51)
+- Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Frontend UI Components|Frontend UI Components]]
-- [[_COMMUNITY_Schema & Setup Docs|Schema & Setup Docs]]
-- [[_COMMUNITY_App Config & Auth Session|App Config & Auth Session]]
-- [[_COMMUNITY_File Assignment & Transfer Pipeline|File Assignment & Transfer Pipeline]]
-- [[_COMMUNITY_Taxonomy Management|Taxonomy Management]]
+- [[_COMMUNITY_Database Models|Database Models]]
+- [[_COMMUNITY_Dashboard Grid & Assignment UI|Dashboard Grid & Assignment UI]]
+- [[_COMMUNITY_App Config & DB Bootstrap|App Config & DB Bootstrap]]
+- [[_COMMUNITY_Schema & File Transfer Pipeline Docs|Schema & File Transfer Pipeline Docs]]
 - [[_COMMUNITY_Frontend API Client|Frontend API Client]]
-- [[_COMMUNITY_CSV Import|CSV Import]]
-- [[_COMMUNITY_User & Role Management|User & Role Management]]
-- [[_COMMUNITY_Original Project Plan Doc|Original Project Plan Doc]]
+- [[_COMMUNITY_Taxonomy Schemas (PhaseCategorySubCategory)|Taxonomy Schemas (Phase/Category/SubCategory)]]
+- [[_COMMUNITY_Reports & Audit Trail Schemas|Reports & Audit Trail Schemas]]
+- [[_COMMUNITY_CSV Import Schemas|CSV Import Schemas]]
+- [[_COMMUNITY_User & Process Type Schemas|User & Process Type Schemas]]
+- [[_COMMUNITY_User Management Modals|User Management Modals]]
 - [[_COMMUNITY_Frontend Dependencies|Frontend Dependencies]]
-- [[_COMMUNITY_Filesystem Browser|Filesystem Browser]]
-- [[_COMMUNITY_Planning Doc AuthImport Notes|Planning Doc: Auth/Import Notes]]
+- [[_COMMUNITY_Production Pipeline Overview Docs|Production Pipeline Overview Docs]]
 - [[_COMMUNITY_Lint Config|Lint Config]]
-- [[_COMMUNITY_README Oxc Tooling|README: Oxc Tooling]]
-- [[_COMMUNITY_README SWC Tooling|README: SWC Tooling]]
-- [[_COMMUNITY_Root Package Marker|Root Package Marker]]
-- [[_COMMUNITY_Favicon Icon|Favicon Icon]]
+- [[_COMMUNITY_Vite Build Plugin (Oxc)|Vite Build Plugin (Oxc)]]
+- [[_COMMUNITY_Vite Build Plugin (SWC)|Vite Build Plugin (SWC)]]
+- [[_COMMUNITY_Project Root|Project Root]]
+- [[_COMMUNITY_App Branding|App Branding]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `User` - 54 edges
-2. `FileRecord` - 33 edges
-3. `request()` - 30 edges
-4. `SubCategory` - 25 edges
-5. `User` - 25 edges
-6. `Session` - 25 edges
-7. `Phase` - 24 edges
-8. `TaskAssignment` - 21 edges
-9. `Category` - 19 edges
-10. `FileStatus` - 18 edges
+1. `User` - 78 edges
+2. `request()` - 51 edges
+3. `FileRecord` - 50 edges
+4. `ProcessType` - 45 edges
+5. `TaskAssignment` - 38 edges
+6. `FileProcessStatus` - 37 edges
+7. `SubCategory` - 35 edges
+8. `Phase` - 34 edges
+9. `FileStatus` - 34 edges
+10. `AuditTrail` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Manual Import Mode (filename-only CSV)` --implements--> `parse_csv_simple()`  [EXTRACTED]
-  planning.md → app/services/csv_import.py
 - `Automatic Schema Migration` --implements--> `apply_schema()`  [EXTRACTED]
   planning.md → scripts/create_database.py
 - `apply_schema()` --calls--> `_migrate_categories_to_phase_scoped()`  [EXTRACTED]
   scripts/create_database.py → planning.md
+- `Manual Import Mode (filename-only CSV)` --implements--> `parse_csv_simple()`  [EXTRACTED]
+  planning.md → app/services/csv_import.py
 - `parse_csv_simple()` --shares_data_with--> `CsvImportRow`  [EXTRACTED]
   app/services/csv_import.py → planning.md
 - `preview_import()` --shares_data_with--> `CsvImportRow`  [EXTRACTED]
@@ -55,60 +55,55 @@
 ## Import Cycles
 - None detected.
 
-## Hyperedges (group relationships)
-- **Copy-Verify-Delete Transfer Pipeline** — planning_copy_verify_delete, planning_filetransferlog, planning_taskassignments, planning_files, planning_fileversions [INFERRED 0.85]
-- **Move Files Between Category/Phase Flow** — components_movefilesmodal, planning_move_files, planning_files, planning_categories, planning_phases [INFERRED 0.80]
-- **JWT Authentication & Session Flow** — planning_jwt_auth, api_client, context_authcontext, pages_loginpage, app_config [INFERRED 0.80]
-
 ## Communities (21 total, 4 thin omitted)
 
-### Community 0 - "Frontend UI Components"
-Cohesion: 0.08
-Nodes (31): AssignModal(), ChangePasswordModal(), ComboSelect(), CreateUserModal(), EditUserModal(), FilesGrid(), FilterBar(), FolderBrowserModal() (+23 more)
-
-### Community 1 - "Schema & Setup Docs"
-Cohesion: 0.06
-Nodes (47): Oxlint, React, React Compiler, Vite, app/ (FastAPI + SQLAlchemy backend), AuditTrail (table), Categories (table), Copy-Verify-Delete Pipeline (+39 more)
-
-### Community 2 - "App Config & Auth Session"
-Cohesion: 0.07
-Nodes (34): _ensure_jwt_secret(), Connects to the 'master' system database - used only to create db_name if it doe, Generates a JWT secret on first run if .env left it blank, and writes it     bac, Settings, get_db(), Session, User, Session (+26 more)
-
-### Community 3 - "File Assignment & Transfer Pipeline"
-Cohesion: 0.18
-Nodes (40): AuditTrail, FileRecord, FileStatus, FileTransferLog, FileVersion, PhasePath, SubCategory, TaskAssignment (+32 more)
-
-### Community 4 - "Taxonomy Management"
-Cohesion: 0.21
-Nodes (38): Category, Phase, Session, User, Session, User, CategoryAdminOut, CategoryLookupItem (+30 more)
-
-### Community 5 - "Frontend API Client"
+### Community 0 - "Database Models"
 Cohesion: 0.10
-Nodes (34): adminResetPassword(), assignFile(), browseFolders(), changePassword(), commitImport(), completeAssignment(), createCategory(), createPhase() (+26 more)
+Nodes (82): AuditTrail, FileProcessStatus, FileRecord, FileStatus, FileTransferLog, FileVersion, TaskAssignment, User (+74 more)
 
-### Community 6 - "CSV Import"
+### Community 1 - "Dashboard Grid & Assignment UI"
+Cohesion: 0.05
+Nodes (46): AssignModal(), FailAssignmentModal(), FileHistoryModal(), FilesGrid(), FilterBar(), SearchBox(), Sidebar(), AuthContext (+38 more)
+
+### Community 2 - "App Config & DB Bootstrap"
+Cohesion: 0.05
+Nodes (48): _ensure_jwt_secret(), Connects to the 'master' system database - used only to create db_name if it doe, Generates a JWT secret on first run if .env left it blank, and writes it     bac, Settings, get_db(), Session, User, User (+40 more)
+
+### Community 3 - "Schema & File Transfer Pipeline Docs"
+Cohesion: 0.06
+Nodes (58): Connection, app/ (FastAPI + SQLAlchemy backend), AuditTrail (table), Categories (table), Copy-Verify-Delete Pipeline, Files (table), FileStatuses (table), FileTransferLog (table) (+50 more)
+
+### Community 4 - "Frontend API Client"
+Cohesion: 0.07
+Nodes (55): adminResetPassword(), assignFile(), browseFolders(), changePassword(), commitImport(), completeAssignment(), createCategory(), createPhase() (+47 more)
+
+### Community 5 - "Taxonomy Schemas (Phase/Category/SubCategory)"
 Cohesion: 0.16
-Nodes (31): ImportBatch, CsvImportCommitRequest, Session, User, CsvImportCommitRequest, CsvImportConflict, CsvImportPreview, CsvImportRow (+23 more)
+Nodes (49): Category, Phase, PhasePath, SubCategory, Session, User, Session, User (+41 more)
 
-### Community 7 - "User & Role Management"
-Cohesion: 0.22
-Nodes (24): Role, Session, User, CreateUserRequest, ResetPasswordRequest, UpdateUserRequest, UserOut, hash_password() (+16 more)
+### Community 6 - "Reports & Audit Trail Schemas"
+Cohesion: 0.15
+Nodes (43): Session, User, Session, User, Session, User, AuditTrailEntryOut, AuditTrailFilterParams (+35 more)
 
-### Community 8 - "Original Project Plan Doc"
+### Community 7 - "CSV Import Schemas"
+Cohesion: 0.14
+Nodes (33): CsvImportCommitRequest, Session, User, CsvImportCommitRequest, CsvImportConflict, CsvImportPreview, CsvImportRow, DuplicateResolution (+25 more)
+
+### Community 8 - "User & Process Type Schemas"
+Cohesion: 0.28
+Nodes (31): ImportBatch, ProcessType, Role, WorkerProcessPath, Session, User, CreateUserRequest, ResetPasswordRequest (+23 more)
+
+### Community 9 - "User Management Modals"
+Cohesion: 0.11
+Nodes (11): ComboSelect(), CreateUserModal(), EditUserModal(), FolderBrowserModal(), Modal(), RoleCheckboxGroup(), EMPTY_LOOKUPS, UsersPage() (+3 more)
+
+### Community 10 - "Frontend Dependencies"
+Cohesion: 0.09
+Nodes (22): dependencies, ag-grid-community, ag-grid-react, react, react-dom, react-router-dom, recharts, devDependencies (+14 more)
+
+### Community 11 - "Production Pipeline Overview Docs"
 Cohesion: 0.11
 Nodes (23): Admin Command Center, Admin Role, AG-Grid (Frontend), Assignment Stage (Admin assigns task -> lock check -> move folder), Completion Stage (Complete -> Completion_TS -> Status update -> Next phase), Copy-Verify-Delete Mechanism, Corrections (Admin reset for accidental completions), Dashboard (Grid with filters for Phase/Category/Sub-Category) (+15 more)
-
-### Community 9 - "Frontend Dependencies"
-Cohesion: 0.09
-Nodes (21): dependencies, ag-grid-community, ag-grid-react, react, react-dom, react-router-dom, devDependencies, oxlint (+13 more)
-
-### Community 10 - "Filesystem Browser"
-Cohesion: 0.39
-Nodes (8): User, browse_folders(), BrowseFoldersOut, FolderEntry, _list_shares(), _local_drive_roots(), A bare `\\host` isn't itself an openable directory on Windows - you can     only, Lists subfolders under `path` so an admin can pick a source folder by     clicki
-
-### Community 11 - "Planning Doc: Auth/Import Notes"
-Cohesion: 0.29
-Nodes (7): Command Center UI Layout, Import Modal (CSV import + conflict resolution), JWT Authentication, Manual Import Mode (filename-only CSV), Role-scoped Grid (server-side RBAC filtering), python-jose[cryptography], python-multipart
 
 ### Community 12 - "Lint Config"
 Cohesion: 0.33
@@ -119,7 +114,7 @@ Nodes (5): plugins, rules, react/only-export-components, react/rules-of-hooks, $
   planning.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **58 isolated node(s):** `Python (FastAPI)`, `FastAPI`, `AG-Grid (Frontend)`, `Settings Table (Role_Root_Paths)`, `Reporting (SQL Views -> Export to PDF/Excel)` (+53 more)
+- **69 isolated node(s):** `Python (FastAPI)`, `FastAPI`, `AG-Grid (Frontend)`, `Settings Table (Role_Root_Paths)`, `Reporting (SQL Views -> Export to PDF/Excel)` (+64 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -128,15 +123,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `parse_csv_simple()` and `_lookup_or_create_category()`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `Frontend (Command Center) - React + Vite + AG-Grid` connect `Schema & Setup Docs` to `Frontend UI Components`, `App Config & Auth Session`, `Planning Doc: Auth/Import Notes`, `Frontend API Client`?**
-  _High betweenness centrality (0.143) - this node is a cross-community bridge._
-- **Why does `User` connect `File Assignment & Transfer Pipeline` to `App Config & Auth Session`, `Taxonomy Management`, `CSV Import`, `User & Role Management`, `Filesystem Browser`?**
-  _High betweenness centrality (0.121) - this node is a cross-community bridge._
-- **Why does `app/ (FastAPI + SQLAlchemy backend)` connect `Schema & Setup Docs` to `CSV Import`, `User & Role Management`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
-- **Are the 41 inferred relationships involving `User` (e.g. with `Session` and `User`) actually correct?**
-  _`User` has 41 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 24 inferred relationships involving `FileRecord` (e.g. with `Session` and `User`) actually correct?**
-  _`FileRecord` has 24 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 17 inferred relationships involving `SubCategory` (e.g. with `Session` and `User`) actually correct?**
-  _`SubCategory` has 17 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Frontend (Command Center) - React + Vite + AG-Grid` connect `Dashboard Grid & Assignment UI` to `App Config & DB Bootstrap`, `Schema & File Transfer Pipeline Docs`, `Frontend API Client`, `CSV Import Schemas`?**
+  _High betweenness centrality (0.167) - this node is a cross-community bridge._
+- **Why does `User` connect `Database Models` to `App Config & DB Bootstrap`, `Taxonomy Schemas (Phase/Category/SubCategory)`, `Reports & Audit Trail Schemas`, `CSV Import Schemas`, `User & Process Type Schemas`?**
+  _High betweenness centrality (0.099) - this node is a cross-community bridge._
+- **Why does `app/ (FastAPI + SQLAlchemy backend)` connect `Schema & File Transfer Pipeline Docs` to `User & Process Type Schemas`, `CSV Import Schemas`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+- **Are the 61 inferred relationships involving `User` (e.g. with `Session` and `User`) actually correct?**
+  _`User` has 61 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 38 inferred relationships involving `FileRecord` (e.g. with `Session` and `User`) actually correct?**
+  _`FileRecord` has 38 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 34 inferred relationships involving `ProcessType` (e.g. with `Session` and `User`) actually correct?**
+  _`ProcessType` has 34 INFERRED edges - model-reasoned connections that need verification._
