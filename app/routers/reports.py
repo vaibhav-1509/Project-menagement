@@ -17,7 +17,7 @@ from app.schemas import (
     WeekSeriesOut,
     YearSeriesOut,
 )
-from app.security import require_admin
+from app.security import get_current_user, require_admin, user_is_admin
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -37,21 +37,40 @@ def _complete_status_id(db: Session) -> int:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Complete"))
 
 
+def _scope_user_id(current_user: User, requested_user_id: int | None) -> int | None:
+    """Non-admins always get their own progress report only, regardless of
+    what user_id they pass - counts every stage THEY personally completed,
+    not just the file's final stage, since 'own worked data' means their own
+    tasks, not the org-wide finished-file metric. Admins see the global
+    finished-file metric by default, or can pass user_id to inspect one
+    specific worker's own report the same way that worker sees it themselves
+    (mirrors calendar._scope_user_id's admin-optional-scoping pattern)."""
+    if not user_is_admin(current_user):
+        return current_user.UserID
+    return requested_user_id
+
+
 def _completions_by_day(
-    db: Session, final_pt_id: int | None, complete_id: int, start: date_cls, end_exclusive: date_cls
+    db: Session,
+    complete_id: int,
+    start: date_cls,
+    end_exclusive: date_cls,
+    user_id: int | None = None,
 ) -> dict:
-    if final_pt_id is None:
-        return {}
-    query = (
-        select(cast(FileProcessStatus.CompletionTS, Date), func.count())
-        .where(
-            FileProcessStatus.ProcessTypeID == final_pt_id,
-            FileProcessStatus.StatusID == complete_id,
-            FileProcessStatus.CompletionTS >= start,
-            FileProcessStatus.CompletionTS < end_exclusive,
-        )
-        .group_by(cast(FileProcessStatus.CompletionTS, Date))
+    """Counts every stage-completion (Polish/GLB/Render, whoever did it) on
+    each day - this is a 'how much work got done' activity metric, matching
+    what each worker's own report already counts, so the team-wide total is
+    just the sum of everyone's individual activity rather than a separate,
+    stricter 'fully finished the whole pipeline' metric (that one lives in
+    taxonomy-progress's isFullyCompleted instead)."""
+    query = select(cast(FileProcessStatus.CompletionTS, Date), func.count()).where(
+        FileProcessStatus.StatusID == complete_id,
+        FileProcessStatus.CompletionTS >= start,
+        FileProcessStatus.CompletionTS < end_exclusive,
     )
+    if user_id is not None:
+        query = query.where(FileProcessStatus.AssignedToUserID == user_id)
+    query = query.group_by(cast(FileProcessStatus.CompletionTS, Date))
     return dict(db.execute(query).all())
 
 
@@ -60,19 +79,20 @@ def get_completions(
     reference_date: str | None = None,
     compare_weeks: int = 4,
     compare_months: int = 6,
-    current_user: User = Depends(require_admin),
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
-    final_pt_id = _final_process_type_id(db)
     complete_id = _complete_status_id(db)
+    scoped_user_id = _scope_user_id(current_user, user_id)
 
     # One grouped query wide enough to cover the year view plus both
     # comparison windows, instead of several overlapping range queries.
     window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
     window_start = ref - timedelta(days=window_days)
     window_end_exclusive = ref + timedelta(days=1)
-    day_counts = _completions_by_day(db, final_pt_id, complete_id, window_start, window_end_exclusive)
+    day_counts = _completions_by_day(db, complete_id, window_start, window_end_exclusive, scoped_user_id)
 
     def count_on(d: date_cls) -> int:
         return day_counts.get(d, 0)

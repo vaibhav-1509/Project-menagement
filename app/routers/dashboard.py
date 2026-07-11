@@ -33,10 +33,12 @@ def list_files(
     """Role-based dashboard filtering.
 
     Admins can see and filter across every file. Artists are hard-scoped
-    server-side to their own phase, and further to files where a
-    FileProcessStatus row shows them as assigned on some stage - `assigned_to_user_id`
-    on the request is ignored for non-admins so a crafted query string can't
-    widen the view past what the UI exposes.
+    server-side to files where a FileProcessStatus row shows them as assigned
+    on some stage - not to their Phase, since a worker's access is entirely
+    defined by what's been assigned to them, not by which phase their account
+    happens to be tagged with. `assigned_to_user_id` on the request is ignored
+    for non-admins so a crafted query string can't widen the view past what
+    the UI exposes.
     """
     query = select(FileRecord)
     is_admin = user_is_admin(current_user)
@@ -51,10 +53,9 @@ def list_files(
             query = query.where(FileRecord.FileID.in_(assigned_query))
     else:
         query = query.where(
-            FileRecord.PhaseID == current_user.PhaseID,
             FileRecord.FileID.in_(
                 select(FileProcessStatus.FileID).where(FileProcessStatus.AssignedToUserID == current_user.UserID)
-            ),
+            )
         )
 
     if filters.phase_id is not None:

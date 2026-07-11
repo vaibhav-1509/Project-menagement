@@ -46,10 +46,19 @@ class TransferVerificationError(Exception):
     pass
 
 
+class SourceNotFoundError(OSError):
+    """The recorded source folder doesn't exist on disk - most often because
+    someone already moved the file manually outside the app. Distinct from a
+    generic OSError so callers can choose to proceed (recording the intended
+    destination for tracking/reporting) instead of reverting the whole
+    operation, while still surfacing a warning that a manual move is needed."""
+
+
 @dataclass
 class TransferResult:
     assignment_id: int
     dest_path: str
+    warning: str | None = None
 
 
 def _status_id(db: Session, name: str) -> int:
@@ -95,6 +104,9 @@ def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_pa
     except PermissionError as exc:
         _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", "File Locked")
         raise FileLockedError(f"Source folder is locked: {source_path}") from exc
+    except FileNotFoundError as exc:
+        _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", "Source not found")
+        raise SourceNotFoundError(f"Source folder not found: {source_path}") from exc
     except OSError as exc:
         _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", str(exc))
         raise
@@ -216,9 +228,20 @@ def assign_file_process(db: Session, file_id: int, process_type_id: int, target_
     # moved after a fail - see mark_assignment_failed) means source and
     # destination are literally the same folder. shutil.copytree can't copy a
     # directory into itself, and there's nothing to transfer anyway.
+    warning = None
     if os.path.normpath(source_path) != os.path.normpath(dest_path):
         try:
             _copy_verify_delete(db, file_id, assignment.AssignmentID, source_path, dest_path)
+        except SourceNotFoundError:
+            # The file isn't where the system expects it - most likely someone
+            # already moved it manually outside the app. Record the assignment
+            # for tracking/reporting anyway (that's the whole point of the
+            # portal for this workflow) rather than blocking on a filesystem
+            # check, but flag that the physical file still needs a manual move.
+            warning = (
+                f"Source folder not found at {source_path} - assignment recorded, but the file "
+                f"was not copied. Please move it into {dest_path} manually."
+            )
         except (FileLockedError, TransferVerificationError, OSError):
             assignment.IsActive = False
             stage_status.StatusID = previous_stage_status_id
@@ -236,7 +259,7 @@ def assign_file_process(db: Session, file_id: int, process_type_id: int, target_
     stage_status.StatusID = pending_id
     db.commit()
 
-    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path)
+    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path, warning=warning)
 
 
 def complete_process_assignment(db: Session, assignment_id: int, current_user: User) -> TransferResult:
@@ -271,8 +294,17 @@ def complete_process_assignment(db: Session, assignment_id: int, current_user: U
 
     complete_id = _status_id(db, "Complete")
 
+    warning = None
     try:
         _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
+    except SourceNotFoundError:
+        # Same rationale as assign_file_process - someone likely already moved
+        # the file manually. Mark the stage Complete for tracking/reporting
+        # purposes, but flag that the physical file still needs a manual move.
+        warning = (
+            f"Source folder not found at {source_path} - marked Complete, but the file was not "
+            f"copied. Please move it into {dest_path} manually."
+        )
     except (FileLockedError, TransferVerificationError, OSError):
         # Retryable - the assignment stays active/in-progress, nothing reverted.
         raise
@@ -289,7 +321,83 @@ def complete_process_assignment(db: Session, assignment_id: int, current_user: U
         stage_status.ActiveAssignmentID = None
     db.commit()
 
-    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path)
+    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path, warning=warning)
+
+
+def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, current_user: User) -> TransferResult:
+    """Self-service undo for 'I marked this Complete by mistake' - unlike
+    reset_file (an admin unassigning back to Pending/nobody), this keeps the
+    SAME worker on the stage and moves the file back from their Complete
+    folder into their Pending folder so they can keep working on it. Only the
+    worker who completed it (or an admin) can reopen it."""
+    file_record = db.get(FileRecord, file_id)
+    if file_record is None:
+        raise ValueError("File not found")
+
+    complete_id = _status_id(db, "Complete")
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    if stage_status is None or stage_status.StatusID != complete_id:
+        raise ValueError("This stage is not Complete - nothing to reopen")
+
+    is_admin = user_is_admin(current_user)
+    if not is_admin and stage_status.AssignedToUserID != current_user.UserID:
+        raise PermissionError("This isn't your completed work to reopen")
+
+    worker_id = stage_status.AssignedToUserID
+    worker_path = db.scalar(
+        select(WorkerProcessPath).where(
+            WorkerProcessPath.UserID == worker_id, WorkerProcessPath.ProcessTypeID == process_type_id
+        )
+    )
+    if worker_path is None:
+        raise ValueError("Worker's folder configuration for this process type is missing")
+
+    last_assignment = db.scalar(
+        select(TaskAssignment)
+        .where(
+            TaskAssignment.FileID == file_id,
+            TaskAssignment.ProcessTypeID == process_type_id,
+            TaskAssignment.AssignedToUserID == worker_id,
+        )
+        .order_by(TaskAssignment.AssignedTS.desc())
+    )
+    if last_assignment is None:
+        raise ValueError("No assignment record found to reopen")
+
+    source_path = file_record.CurrentPath
+    dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+    pending_id = _status_id(db, "Pending")
+
+    warning = None
+    if os.path.normpath(source_path) != os.path.normpath(dest_path):
+        try:
+            _copy_verify_delete(db, file_id, last_assignment.AssignmentID, source_path, dest_path)
+        except SourceNotFoundError:
+            warning = (
+                f"Source folder not found at {source_path} - reopened for tracking, but the file "
+                f"was not moved. Please move it into {dest_path} manually."
+            )
+        except (FileLockedError, TransferVerificationError, OSError):
+            # Retryable - nothing reverted, stage stays Complete until this succeeds.
+            raise
+
+    last_assignment.IsActive = True
+    last_assignment.StatusID = pending_id
+    last_assignment.CompletionTS = None
+
+    stage_status.StatusID = pending_id
+    stage_status.ActiveAssignmentID = last_assignment.AssignmentID
+    stage_status.CompletionTS = None
+
+    file_record.CurrentPath = dest_path
+    file_record.StatusID = pending_id
+    db.commit()
+
+    return TransferResult(assignment_id=last_assignment.AssignmentID, dest_path=dest_path, warning=warning)
 
 
 def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current_user: User) -> None:

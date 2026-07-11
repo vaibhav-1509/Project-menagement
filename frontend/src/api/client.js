@@ -135,6 +135,14 @@ export function resetFile(fileId, processTypeId) {
   return request(`/admin/files/${fileId}/reset?process_type_id=${processTypeId}`, { method: 'POST' })
 }
 
+export function revokeFile(fileId, processTypeId) {
+  return request(`/admin/files/${fileId}/revoke?process_type_id=${processTypeId}`, { method: 'POST' })
+}
+
+export function reopenFile(fileId, processTypeId) {
+  return request(`/files/${fileId}/reopen?process_type_id=${processTypeId}`, { method: 'POST' })
+}
+
 export function setFileActive(fileId, isActive) {
   return request(`/admin/files/${fileId}`, { method: 'PATCH', body: { is_active: isActive } })
 }

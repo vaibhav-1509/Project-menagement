@@ -77,9 +77,7 @@ export default function App() {
         path="/reports"
         element={
           <ProtectedRoute>
-            <AdminRoute>
-              <ReportsPage />
-            </AdminRoute>
+            <ReportsPage />
           </ProtectedRoute>
         }
       />

@@ -13,6 +13,7 @@ from app.services.file_transfer import (
     TransferVerificationError,
     complete_process_assignment,
     mark_assignment_failed,
+    reopen_process_assignment,
 )
 
 router = APIRouter(tags=["assignments"])
@@ -20,6 +21,34 @@ router = APIRouter(tags=["assignments"])
 
 def _status_id(db: Session, name: str) -> int:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == name))
+
+
+def _assert_no_later_stage_started(db: Session, file_id: int, process_type: ProcessType, action: str) -> None:
+    """Shared guard for Reset/Revoke - resetting or revoking an earlier stage
+    out from under a later stage that's already started would violate
+    sequential gating (e.g. undoing Polish while GLB is already assigned)."""
+    pending_status_id = _status_id(db, "Pending")
+    later_process_types = db.scalars(
+        select(ProcessType).where(ProcessType.IsActive == True, ProcessType.SortOrder > process_type.SortOrder)  # noqa: E712
+    ).all()
+    if not later_process_types:
+        return
+    later_stage_statuses = db.scalars(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id,
+            FileProcessStatus.ProcessTypeID.in_([pt.ProcessTypeID for pt in later_process_types]),
+        )
+    ).all()
+    started = next(
+        (s for s in later_stage_statuses if s.StatusID != pending_status_id or s.AssignedToUserID is not None),
+        None,
+    )
+    if started is not None:
+        later_pt_name = next(pt.ProcessTypeName for pt in later_process_types if pt.ProcessTypeID == started.ProcessTypeID)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot {action} {process_type.ProcessTypeName} - {later_pt_name} has already started. {action.capitalize()} {later_pt_name} first.",
+        )
 
 
 @router.post("/api/assignments/{assignment_id}/complete")
@@ -41,8 +70,36 @@ def complete_assignment(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
 
-    return {"status": "complete", "dest_path": result.dest_path}
+    return {"status": "complete", "dest_path": result.dest_path, "warning": result.warning}
+
+
+@router.post("/api/files/{file_id}/reopen")
+def reopen_file(
+    file_id: int,
+    process_type_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Self-service undo for 'I marked this Complete by mistake' - only the
+    worker who completed it (or an admin) can reopen it, and it stays
+    assigned to that same worker rather than being unassigned like Reset."""
+    try:
+        result = reopen_process_assignment(db, file_id, process_type_id, current_user)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except FileLockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except TransferVerificationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
+
+    return {"status": "reopened", "dest_path": result.dest_path, "warning": result.warning}
 
 
 @router.post("/api/assignments/{assignment_id}/fail")
@@ -80,6 +137,13 @@ def reset_file(
     if file_record is None:
         raise HTTPException(status_code=404, detail="File not found")
 
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None:
+        raise HTTPException(status_code=400, detail="Unknown process type")
+
+    pending_status_id = _status_id(db, "Pending")
+    _assert_no_later_stage_started(db, file_id, process_type, "reset")
+
     assignment = db.scalar(
         select(TaskAssignment).where(
             TaskAssignment.FileID == file_id,
@@ -99,7 +163,6 @@ def reset_file(
         )
         assignment.IsActive = False
 
-    pending_status_id = _status_id(db, "Pending")
     stage_status = db.scalar(
         select(FileProcessStatus).where(
             FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
@@ -109,6 +172,12 @@ def reset_file(
         stage_status.StatusID = pending_status_id
         stage_status.AssignedToUserID = None
         stage_status.ActiveAssignmentID = None
+        # Clear the prior attempt's timestamps/reason too - otherwise a stage
+        # reset back to Pending keeps showing a stale CompletionTS/StartedTS
+        # from the attempt that was just undone.
+        stage_status.StartedTS = None
+        stage_status.CompletionTS = None
+        stage_status.LastFailureReason = None
 
     db.add(
         AuditTrail(
@@ -122,6 +191,77 @@ def reset_file(
     )
     db.commit()
     return {"status": "reset"}
+
+
+@router.post("/api/admin/files/{file_id}/revoke")
+def revoke_file(
+    file_id: int,
+    process_type_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin undoes their OWN assignment mistake (wrong file, wrong worker) -
+    unlike Reset (a legitimate workflow undo that keeps the historical
+    record intact), Revoke also marks the mistaken attempt as Revoked so it
+    no longer counts toward that worker's Calendar/Reports history, as if it
+    never happened. Use Reset when real work happened and is being walked
+    back for a workflow reason; use Revoke when the assignment itself was a
+    mistake."""
+    file_record = db.get(FileRecord, file_id)
+    if file_record is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None:
+        raise HTTPException(status_code=400, detail="Unknown process type")
+
+    pending_status_id = _status_id(db, "Pending")
+    revoked_status_id = _status_id(db, "Revoked")
+    _assert_no_later_stage_started(db, file_id, process_type, "revoke")
+
+    assignment = db.scalar(
+        select(TaskAssignment)
+        .where(TaskAssignment.FileID == file_id, TaskAssignment.ProcessTypeID == process_type_id)
+        .order_by(TaskAssignment.AssignedTS.desc())
+    )
+    if assignment is None:
+        raise HTTPException(status_code=400, detail="No assignment to revoke for this stage")
+
+    old_value = json.dumps(
+        {
+            "assignment_id": assignment.AssignmentID,
+            "assigned_to_user_id": assignment.AssignedToUserID,
+            "status_id": assignment.StatusID,
+        }
+    )
+    assignment.IsActive = False
+    assignment.StatusID = revoked_status_id
+
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    if stage_status is not None:
+        stage_status.StatusID = pending_status_id
+        stage_status.AssignedToUserID = None
+        stage_status.ActiveAssignmentID = None
+        stage_status.StartedTS = None
+        stage_status.CompletionTS = None
+        stage_status.LastFailureReason = None
+
+    db.add(
+        AuditTrail(
+            FileID=file_id,
+            AssignmentID=assignment.AssignmentID,
+            Action="Revoked",
+            PerformedByUserID=current_user.UserID,
+            OldValue=old_value,
+            NewValue=json.dumps({"status": "Revoked", "assigned_to_user_id": None}),
+        )
+    )
+    db.commit()
+    return {"status": "revoked"}
 
 
 @router.get("/api/files/{file_id}/process-history", response_model=FileProcessHistoryOut)

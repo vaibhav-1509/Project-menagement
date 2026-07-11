@@ -8,6 +8,8 @@
   --accent-hover: #4b31d1;
   --danger: #d0453b;
   --danger-bg: #fdeceb;
+  --warning: #9a6400;
+  --warning-bg: #fdf3db;
   --sidebar-bg: #171522;
   --sidebar-text: #c9c6d6;
   --sidebar-text-active: #ffffff;
@@ -29,6 +31,8 @@
     --accent-hover: #a08cff;
     --danger: #ff8079;
     --danger-bg: #3a1d1c;
+    --warning: #e0b34d;
+    --warning-bg: #3a2f14;
     --sidebar-bg: #0d0c12;
     --sidebar-text: #a6a3b5;
     --sidebar-text-active: #ffffff;
@@ -273,6 +277,14 @@ textarea {
 .error-banner {
   background: var(--danger-bg);
   color: var(--danger);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.warning-banner {
+  background: var(--warning-bg);
+  color: var(--warning);
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 13px;

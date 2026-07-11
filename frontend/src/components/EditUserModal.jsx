@@ -16,9 +16,10 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
   const [browserTarget, setBrowserTarget] = useState(null) // { processTypeId, field: 'pending' | 'complete' }
 
   // Admin and worker roles aren't mutually exclusive - a user can hold both
-  // (e.g. an admin who also does Polish work). Phase + Process Type Paths are
-  // needed whenever ANY held role is a non-Admin one, regardless of whether
-  // Admin is also held.
+  // (e.g. an admin who also does Polish work). Process Type Paths only make
+  // sense once a non-Admin role is held (that's what makes someone assignable
+  // work) - Phase itself is never required, since a worker's access is
+  // entirely defined by what's assigned to them, not by phase membership.
   const hasWorkerRole = roleIds.some((id) => lookups.roles.find((r) => r.id === id)?.name !== 'Admin')
 
   useEffect(() => {
@@ -60,11 +61,6 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
       setError('Select at least one role')
       return
     }
-    if (hasWorkerRole && !phaseId) {
-      setError('Select a phase for this role')
-      return
-    }
-
     const entries = []
     for (const pt of lookups.processTypes) {
       const entry = pathsByType[pt.id]
@@ -85,7 +81,7 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
     try {
       await onSave(user.UserID, {
         role_ids: roleIds,
-        phase_id: hasWorkerRole ? Number(phaseId) : null,
+        phase_id: phaseId ? Number(phaseId) : null,
         is_active: isActive,
       })
       await api.setWorkerProcessPaths(user.UserID, entries)
@@ -101,19 +97,17 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
     <Modal title={`Edit "${user.Username}"`} onClose={onClose} wide>
       <form onSubmit={handleSubmit} className="modal-body" style={{ padding: 0 }}>
         <RoleCheckboxGroup roles={lookups.roles} value={roleIds} onChange={setRoleIds} />
-        {hasWorkerRole && (
-          <label>
-            Phase
-            <select value={phaseId} onChange={(e) => setPhaseId(e.target.value)} required={hasWorkerRole}>
-              <option value="">Select a phase...</option>
-              {lookups.phases.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label>
+          Phase <span className="hint">(optional - for reference only, doesn't limit what they can be assigned)</span>
+          <select value={phaseId} onChange={(e) => setPhaseId(e.target.value)}>
+            <option value="">No phase</option>
+            {lookups.phases.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="checkbox-row">
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
           Active

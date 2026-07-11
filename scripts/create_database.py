@@ -146,6 +146,16 @@ def _migrate_add_failed_status(cursor) -> None:
         cursor.execute("INSERT INTO FileStatuses (StatusName) VALUES ('Failed')")
 
 
+def _migrate_add_revoked_status(cursor) -> None:
+    """'Revoked' marks an assignment as an admin data-entry mistake (wrong
+    file/wrong worker) rather than real work that was later walked back -
+    Calendar/Reports exclude it from history, unlike a legitimate Reset."""
+    cursor.execute("SELECT 1 FROM FileStatuses WHERE StatusName = 'Revoked'")
+    if cursor.fetchone() is None:
+        print("Adding 'Revoked' file status...")
+        cursor.execute("INSERT INTO FileStatuses (StatusName) VALUES ('Revoked')")
+
+
 def _migrate_create_process_types(cursor) -> None:
     print("Creating ProcessTypes (Polish/GLB/Render pipeline stages)...")
     cursor.execute(
@@ -407,6 +417,7 @@ def _run_migrations(cursor) -> None:
     if not _column_exists(cursor, "Phases", "IsActive"):
         _migrate_add_is_active(cursor)
     _migrate_add_failed_status(cursor)
+    _migrate_add_revoked_status(cursor)
     if not _table_exists(cursor, "ProcessTypes"):
         _migrate_create_process_types(cursor)
     if not _table_exists(cursor, "WorkerProcessPaths"):

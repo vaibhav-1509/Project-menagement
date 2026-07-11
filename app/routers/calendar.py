@@ -2,7 +2,7 @@ import calendar as calendar_module
 from datetime import date as date_cls, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import Date, cast, func, select
+from sqlalchemy import Date, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -42,9 +42,18 @@ def get_activity(
     complete_id = _status_id(db, "Complete")
     failed_id = _status_id(db, "Failed")
 
+    # Excludes assignment rows that were reset or reverted (e.g. the source
+    # folder wasn't found and the copy was aborted) - those never actually took
+    # effect, so counting them as "Assigned" activity would overstate today's
+    # real work. A row only counts here if it's still active, or if it reached
+    # a genuine terminal outcome (Complete/Failed).
     assigned_q = (
         select(cast(TaskAssignment.AssignedTS, Date), func.count())
-        .where(TaskAssignment.AssignedTS >= first_day, TaskAssignment.AssignedTS < next_month_start)
+        .where(
+            TaskAssignment.AssignedTS >= first_day,
+            TaskAssignment.AssignedTS < next_month_start,
+            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID.in_([complete_id, failed_id])),  # noqa: E712
+        )
         .group_by(cast(TaskAssignment.AssignedTS, Date))
     )
     completed_q = (
@@ -116,7 +125,11 @@ def get_day(
         base_query = base_query.where(TaskAssignment.AssignedToUserID == effective_user_id)
 
     assigned_rows = db.execute(
-        base_query.where(TaskAssignment.AssignedTS >= target_date, TaskAssignment.AssignedTS < next_day)
+        base_query.where(
+            TaskAssignment.AssignedTS >= target_date,
+            TaskAssignment.AssignedTS < next_day,
+            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID.in_([complete_id, failed_id])),  # noqa: E712
+        )
     ).all()
     completion_rows = db.execute(
         base_query.where(TaskAssignment.CompletionTS >= target_date, TaskAssignment.CompletionTS < next_day)

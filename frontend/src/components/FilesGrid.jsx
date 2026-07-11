@@ -34,8 +34,25 @@ function findAssignableStage(row) {
   return null
 }
 
-function findActiveStage(row) {
-  return (row.processStages || []).find((s) => s.activeAssignmentId)
+// A stage the admin can reset (undo) - either mid-flight (has an active
+// assignment) or already marked Complete (e.g. completed by mistake). Only
+// the "frontier" stage is resettable: if a later stage has already started,
+// resetting an earlier one out from under it would violate sequential
+// gating, so that case is refused here rather than left to create an
+// inconsistent pipeline state.
+function findResettableStage(row) {
+  const stages = row.processStages || []
+  for (let i = stages.length - 1; i >= 0; i--) {
+    const stage = stages[i]
+    const isResettable = stage.activeAssignmentId != null || stage.statusName === 'Complete'
+    if (!isResettable) continue
+    const laterStageStarted = stages
+      .slice(i + 1)
+      .some((s) => s.statusName !== 'Pending' || s.assignedToUserId != null)
+    if (laterStageStarted) return null
+    return stage
+  }
+  return null
 }
 
 export default function FilesGrid({
@@ -44,6 +61,8 @@ export default function FilesGrid({
   users,
   onAssign,
   onReset,
+  onRevoke,
+  onReopen,
   onComplete,
   onFail,
   onHistory,
@@ -157,7 +176,7 @@ export default function FilesGrid({
         cellRenderer: (p) => {
           const row = p.data
           const assignable = findAssignableStage(row)
-          const activeStage = findActiveStage(row)
+          const resettableStage = findResettableStage(row)
           const isMine = row.myActiveAssignmentId != null
           const hasAnyActiveAssignment = (row.processStages || []).some((s) => s.activeAssignmentId)
           return (
@@ -165,9 +184,27 @@ export default function FilesGrid({
               {!readOnly && isAdmin && assignable && (
                 <button onClick={() => onAssign(row, assignable)}>Assign {assignable.processTypeName}</button>
               )}
-              {!readOnly && isAdmin && activeStage && (
-                <button onClick={() => onReset(row, activeStage)} className="secondary">
-                  Reset {activeStage.processTypeName}
+              {!readOnly && isAdmin && resettableStage && (
+                <button onClick={() => onReset(row, resettableStage)} className="secondary">
+                  {resettableStage.statusName === 'Complete' ? 'Undo Complete' : 'Reset'} {resettableStage.processTypeName}
+                </button>
+              )}
+              {!readOnly && isAdmin && resettableStage && (
+                <button
+                  onClick={() => onRevoke(row, resettableStage)}
+                  className="secondary"
+                  title="Undo an assignment mistake - removes it from that worker's Calendar/Reports history, unlike Reset"
+                >
+                  Revoke {resettableStage.processTypeName}
+                </button>
+              )}
+              {!readOnly && resettableStage && resettableStage.statusName === 'Complete' && resettableStage.assignedToUserId === currentUserId && (
+                <button
+                  onClick={() => onReopen(row, resettableStage)}
+                  className="secondary"
+                  title="Undo your own Complete - reopens it under you so you can keep working"
+                >
+                  Reopen {resettableStage.processTypeName}
                 </button>
               )}
               {!readOnly && isMine && (
@@ -201,7 +238,23 @@ export default function FilesGrid({
         },
       },
     ],
-    [lookups, stageColumns, isAdmin, currentUserId, navigate, readOnly, onAssign, onReset, onComplete, onFail, onHistory, onSetActive, onDelete]
+    [
+      lookups,
+      stageColumns,
+      isAdmin,
+      currentUserId,
+      navigate,
+      readOnly,
+      onAssign,
+      onReset,
+      onRevoke,
+      onReopen,
+      onComplete,
+      onFail,
+      onHistory,
+      onSetActive,
+      onDelete,
+    ]
   )
 
   return (

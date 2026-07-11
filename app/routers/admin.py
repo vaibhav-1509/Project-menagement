@@ -86,8 +86,10 @@ def assign(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
 
-    return {"assignment_id": result.assignment_id, "dest_path": result.dest_path}
+    return {"assignment_id": result.assignment_id, "dest_path": result.dest_path, "warning": result.warning}
 
 
 @router.post("/move-category")

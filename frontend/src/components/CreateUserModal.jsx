@@ -16,10 +16,6 @@ export default function CreateUserModal({ lookups, onCreate, onClose }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Admin and worker roles aren't mutually exclusive - Phase is needed whenever
-  // ANY held role is a non-Admin one, regardless of whether Admin is also held.
-  const hasWorkerRole = roleIds.some((id) => lookups.roles.find((r) => r.id === id)?.name !== 'Admin')
-
   function handleRoleIdsChange(nextIds) {
     const added = nextIds.find((id) => !roleIds.includes(id))
     setRoleIds(nextIds)
@@ -43,17 +39,13 @@ export default function CreateUserModal({ lookups, onCreate, onClose }) {
       setError('Select at least one role')
       return
     }
-    if (hasWorkerRole && !phaseId) {
-      setError('Select a phase for this role')
-      return
-    }
     setLoading(true)
     try {
       await onCreate({
         username,
         password,
         role_ids: roleIds,
-        phase_id: hasWorkerRole ? Number(phaseId) : null,
+        phase_id: phaseId ? Number(phaseId) : null,
       })
       onClose()
     } catch (err) {
@@ -75,19 +67,17 @@ export default function CreateUserModal({ lookups, onCreate, onClose }) {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </label>
         <RoleCheckboxGroup roles={lookups.roles} value={roleIds} onChange={handleRoleIdsChange} />
-        {hasWorkerRole && (
-          <label>
-            Phase
-            <select value={phaseId} onChange={(e) => setPhaseId(e.target.value)} required={hasWorkerRole}>
-              <option value="">Select a phase...</option>
-              {lookups.phases.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label>
+          Phase <span className="hint">(optional - for reference only, doesn't limit what they can be assigned)</span>
+          <select value={phaseId} onChange={(e) => setPhaseId(e.target.value)}>
+            <option value="">No phase</option>
+            {lookups.phases.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
         {error && <div className="error-banner">{error}</div>}
         <div className="modal-actions">
           <button type="button" onClick={onClose} className="secondary">

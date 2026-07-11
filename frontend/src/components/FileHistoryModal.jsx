@@ -3,7 +3,7 @@ import Modal from './Modal'
 import * as api from '../api/client'
 
 function StatusPill({ statusName, failureReason }) {
-  const cls = statusName === 'Complete' ? 'active' : statusName === 'Failed' ? 'inactive' : ''
+  const cls = statusName === 'Complete' ? 'active' : statusName === 'Failed' || statusName === 'Revoked' ? 'inactive' : ''
   return (
     <span className={`status-pill ${cls}`} title={failureReason || ''}>
       {statusName}
@@ -51,7 +51,13 @@ export default function FileHistoryModal({ fileId, onClose }) {
                         <StatusPill statusName={a.statusName} />
                         <span className="hint">
                           {new Date(a.assignedTs).toLocaleString()}
-                          {a.completionTs ? ` -> ${new Date(a.completionTs).toLocaleString()}` : ' (in progress)'}
+                          {a.completionTs
+                            ? ` -> ${new Date(a.completionTs).toLocaleString()}`
+                            : a.isActive
+                              ? ' (in progress)'
+                              : a.statusName === 'Revoked'
+                                ? ' (revoked - assignment mistake, excluded from reports)'
+                                : ' (reset - never completed)'}
                         </span>
                       </div>
                       {a.failureReason && <p className="hint">Reason: {a.failureReason}</p>}

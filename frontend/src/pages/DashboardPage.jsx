@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [filters, setFilters] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [warning, setWarning] = useState('')
   const [assignTarget, setAssignTarget] = useState(null) // { file, stage }
   const [failTarget, setFailTarget] = useState(null) // file row
   const [historyFileId, setHistoryFileId] = useState(null)
@@ -67,19 +68,52 @@ export default function DashboardPage() {
   }, [filters])
 
   async function handleAssign(fileId, userId, processTypeId) {
-    await api.assignFile(fileId, userId, processTypeId)
+    setWarning('')
+    const result = await api.assignFile(fileId, userId, processTypeId)
+    if (result?.warning) setWarning(result.warning)
     await loadFiles(filters)
   }
 
   async function handleReset(row, stage) {
-    if (!window.confirm(`Reset "${row.FileName}"'s ${stage.processTypeName} stage back to Pending?`)) return
+    const verb = stage.statusName === 'Complete' ? 'Undo the completed' : 'Reset the'
+    if (!window.confirm(`${verb} "${row.FileName}"'s ${stage.processTypeName} stage back to Pending?`)) return
     await api.resetFile(row.FileID, stage.processTypeId)
     await loadFiles(filters)
   }
 
+  async function handleRevoke(row, stage) {
+    if (
+      !window.confirm(
+        `Revoke "${row.FileName}"'s ${stage.processTypeName} assignment? Use this only if the assignment itself was a mistake - it removes it from ${stage.assignedToUserId ? 'the assigned worker\'s' : "that worker's"} Calendar/Reports history entirely, unlike Reset.`
+      )
+    )
+      return
+    setWarning('')
+    try {
+      await api.revokeFile(row.FileID, stage.processTypeId)
+      await loadFiles(filters)
+    } catch (err) {
+      setError(err.message || 'Failed to revoke assignment')
+    }
+  }
+
+  async function handleReopen(row, stage) {
+    if (!window.confirm(`Reopen "${row.FileName}"'s ${stage.processTypeName} stage so you can keep working on it?`)) return
+    setWarning('')
+    try {
+      const result = await api.reopenFile(row.FileID, stage.processTypeId)
+      if (result?.warning) setWarning(result.warning)
+      await loadFiles(filters)
+    } catch (err) {
+      setError(err.message || 'Failed to reopen stage')
+    }
+  }
+
   async function handleComplete(row) {
     if (!row.myActiveAssignmentId) return
-    await api.completeAssignment(row.myActiveAssignmentId)
+    setWarning('')
+    const result = await api.completeAssignment(row.myActiveAssignmentId)
+    if (result?.warning) setWarning(result.warning)
     await loadFiles(filters)
   }
 
@@ -118,6 +152,7 @@ export default function DashboardPage() {
           )}
         </div>
         {error && <div className="error-banner">{error}</div>}
+        {warning && <div className="warning-banner">{warning}</div>}
         {loading ? (
           <div className="loading">Loading...</div>
         ) : (
@@ -127,6 +162,8 @@ export default function DashboardPage() {
             users={users}
             onAssign={(row, stage) => setAssignTarget({ file: row, stage })}
             onReset={handleReset}
+            onRevoke={handleRevoke}
+            onReopen={handleReopen}
             onComplete={handleComplete}
             onFail={(row) => setFailTarget(row)}
             onHistory={(row) => setHistoryFileId(row.FileID)}

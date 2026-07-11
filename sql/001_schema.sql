@@ -260,7 +260,7 @@ GO
 -- not phases. Phases are a free-form classification the admin defines from scratch
 -- via the Categories page (see app/routers/taxonomy.py).
 INSERT INTO Roles (RoleName) VALUES ('Admin'), ('Polish Artist'), ('GLB Artist'), ('Render Artist');
-INSERT INTO FileStatuses (StatusName) VALUES ('Pending'), ('InProgress'), ('Transferring'), ('Complete'), ('Locked'), ('Error'), ('Failed');
+INSERT INTO FileStatuses (StatusName) VALUES ('Pending'), ('InProgress'), ('Transferring'), ('Complete'), ('Locked'), ('Error'), ('Failed'), ('Revoked');
 INSERT INTO ProcessTypes (ProcessTypeName, SortOrder) VALUES ('Polish', 10), ('GLB', 20), ('Render', 30);
 GO
 

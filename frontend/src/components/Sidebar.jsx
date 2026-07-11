@@ -37,14 +37,12 @@ export default function Sidebar({ onImportClick }) {
             Import CSV
           </button>
         )}
-        {isAdmin && (
-          <button
-            className={`nav-item nav-item-button ${location.pathname === '/reports' ? 'active' : ''}`}
-            onClick={() => navigate('/reports')}
-          >
-            Reports
-          </button>
-        )}
+        <button
+          className={`nav-item nav-item-button ${location.pathname === '/reports' ? 'active' : ''}`}
+          onClick={() => navigate('/reports')}
+        >
+          Reports
+        </button>
         <button
           className={`nav-item nav-item-button ${location.pathname === '/calendar' ? 'active' : ''}`}
           onClick={() => navigate('/calendar')}
