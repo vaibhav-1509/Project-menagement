@@ -5,6 +5,7 @@ Usage:
     python scripts/reset_password.py <username> <new_password>
 """
 
+import secrets
 import sys
 from pathlib import Path
 
@@ -28,7 +29,15 @@ def reset_password(username: str, new_password: str) -> None:
     conn = pyodbc.connect(conn_str, autocommit=True)
     try:
         cursor = conn.cursor()
-        cursor.execute("UPDATE Users SET PasswordHash = ? WHERE Username = ?", hash_password(new_password), username)
+        # Also rotates SecurityStamp so any session token issued before this
+        # reset stops working immediately, instead of remaining valid until
+        # it naturally expires (see app/security.py's get_current_user).
+        cursor.execute(
+            "UPDATE Users SET PasswordHash = ?, SecurityStamp = ? WHERE Username = ?",
+            hash_password(new_password),
+            secrets.token_hex(32),
+            username,
+        )
         if cursor.rowcount == 0:
             print(f"No user named '{username}' found.")
         else:

@@ -175,7 +175,7 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
           <button type="button" onClick={onClose} className="secondary">
             Cancel
           </button>
-          <button type="submit" disabled={loading}>
+          <button type="submit" disabled={loading || pathsLoading}>
             {loading ? 'Saving...' : 'Save'}
           </button>
         </div>

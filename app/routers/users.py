@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select
@@ -136,6 +137,10 @@ def admin_reset_password(
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
 
     user.PasswordHash = hash_password(payload.new_password)
+    # Invalidates every token already issued to this user - an admin
+    # resetting someone's password (e.g. suspected compromise) should kill
+    # their existing sessions, not just block future logins with the old one.
+    user.SecurityStamp = secrets.token_hex(32)
     db.commit()
     return {"status": "password_reset"}
 

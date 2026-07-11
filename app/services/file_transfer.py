@@ -65,6 +65,33 @@ def _status_id(db: Session, name: str) -> int:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == name))
 
 
+def assert_no_later_stage_started(db: Session, file_id: int, process_type: ProcessType, action: str) -> None:
+    """Shared guard for Reset/Revoke/Reopen - undoing an earlier stage out from
+    under a later stage that's already started would violate sequential
+    gating (e.g. reopening Polish while GLB is already assigned or complete)."""
+    pending_status_id = _status_id(db, "Pending")
+    later_process_types = db.scalars(
+        select(ProcessType).where(ProcessType.IsActive == True, ProcessType.SortOrder > process_type.SortOrder)  # noqa: E712
+    ).all()
+    if not later_process_types:
+        return
+    later_stage_statuses = db.scalars(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id,
+            FileProcessStatus.ProcessTypeID.in_([pt.ProcessTypeID for pt in later_process_types]),
+        )
+    ).all()
+    started = next(
+        (s for s in later_stage_statuses if s.StatusID != pending_status_id or s.AssignedToUserID is not None),
+        None,
+    )
+    if started is not None:
+        later_pt_name = next(pt.ProcessTypeName for pt in later_process_types if pt.ProcessTypeID == started.ProcessTypeID)
+        raise ValueError(
+            f"Cannot {action} {process_type.ProcessTypeName} - {later_pt_name} has already started. {action.capitalize()} {later_pt_name} first."
+        )
+
+
 def _dir_signature(path: str) -> tuple[int, int]:
     """(file_count, total_bytes) - cheap integrity check for large SMB trees."""
     file_count = 0
@@ -334,6 +361,10 @@ def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, c
     if file_record is None:
         raise ValueError("File not found")
 
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None:
+        raise ValueError("Unknown process type")
+
     complete_id = _status_id(db, "Complete")
     stage_status = db.scalar(
         select(FileProcessStatus).where(
@@ -346,6 +377,11 @@ def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, c
     is_admin = user_is_admin(current_user)
     if not is_admin and stage_status.AssignedToUserID != current_user.UserID:
         raise PermissionError("This isn't your completed work to reopen")
+
+    # Reopening this stage would undo its output while a later stage may
+    # already be relying on it (assigned or further along) - same
+    # pipeline-order guard Reset/Revoke use.
+    assert_no_later_stage_started(db, file_id, process_type, "reopen")
 
     worker_id = stage_status.AssignedToUserID
     worker_path = db.scalar(

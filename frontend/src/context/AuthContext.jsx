@@ -41,10 +41,21 @@ export function AuthProvider({ children }) {
     setUsername(null)
   }
 
+  // client.js's changePassword() writes a fresh token straight to
+  // localStorage (to keep this session alive through a self-service password
+  // change, since the backend rotates the account's session-invalidation
+  // stamp as part of that call) - this re-syncs React state from it so
+  // `claims`/`token` reflect the new one immediately.
+  function refreshToken() {
+    setToken(api.getToken())
+  }
+
   const isAdmin = myRoleNames.includes('Admin')
 
   return (
-    <AuthContext.Provider value={{ token, claims, username, myRoleNames, isAdmin, rolesLoaded, login, logout }}>
+    <AuthContext.Provider
+      value={{ token, claims, username, myRoleNames, isAdmin, rolesLoaded, login, logout, refreshToken }}
+    >
       {children}
     </AuthContext.Provider>
   )

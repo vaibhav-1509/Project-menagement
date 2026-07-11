@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime
 
 from sqlalchemy import (
@@ -87,6 +88,12 @@ class User(Base):
     PhaseID: Mapped[int | None] = mapped_column(ForeignKey("Phases.PhaseID"), nullable=True)
     IsActive: Mapped[bool] = mapped_column(Boolean, default=True)
     CreatedAt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # Bumped on every password change/reset and randomized fresh on every
+    # INSERT - embedded in every JWT and re-checked on every request, so a
+    # token becomes worthless the moment the password changes, the account is
+    # recreated, or (via a full database wipe) the whole row is replaced -
+    # even if the new row happens to reuse the same UserID.
+    SecurityStamp: Mapped[str] = mapped_column(String(64), default=lambda: secrets.token_hex(32))
 
     roles: Mapped[list["Role"]] = relationship(secondary=UserRoles, back_populates="users")
 

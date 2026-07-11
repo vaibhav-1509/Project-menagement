@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import Modal from './Modal'
 import * as api from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 export default function ChangePasswordModal({ onClose }) {
+  const { refreshToken } = useAuth()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -24,6 +26,7 @@ export default function ChangePasswordModal({ onClose }) {
     setLoading(true)
     try {
       await api.changePassword(currentPassword, newPassword)
+      refreshToken()
       setDone(true)
     } catch (err) {
       setError(err.message || 'Failed to change password')

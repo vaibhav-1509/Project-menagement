@@ -5,7 +5,7 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-function setToken(token) {
+export function setToken(token) {
   if (token) localStorage.setItem(TOKEN_KEY, token)
   else localStorage.removeItem(TOKEN_KEY)
 }
@@ -108,11 +108,17 @@ export function deleteUser(userId) {
   return request(`/admin/users/${userId}`, { method: 'DELETE' })
 }
 
-export function changePassword(currentPassword, newPassword) {
-  return request('/auth/change-password', {
+export async function changePassword(currentPassword, newPassword) {
+  const data = await request('/auth/change-password', {
     method: 'POST',
     body: { current_password: currentPassword, new_password: newPassword },
   })
+  // The backend rotates this account's session-invalidation stamp as part of
+  // changing the password (so any OTHER device's old token stops working),
+  // which would otherwise log this browser out too - it hands back a fresh
+  // token for the current session, so apply it to stay logged in.
+  if (data.access_token) setToken(data.access_token)
+  return data
 }
 
 export function getFiles(filters = {}) {

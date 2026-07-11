@@ -41,18 +41,22 @@ def get_activity(
 
     complete_id = _status_id(db, "Complete")
     failed_id = _status_id(db, "Failed")
+    transferring_id = _status_id(db, "Transferring")
 
-    # Excludes assignment rows that were reset or reverted (e.g. the source
-    # folder wasn't found and the copy was aborted) - those never actually took
-    # effect, so counting them as "Assigned" activity would overstate today's
-    # real work. A row only counts here if it's still active, or if it reached
-    # a genuine terminal outcome (Complete/Failed).
+    # Excludes only assignment rows whose copy never actually finished (still
+    # stuck at Transferring when reverted - e.g. the source folder wasn't
+    # found and the whole operation was rolled back) - those never took
+    # effect, so counting them as "Assigned" would overstate real work. Once a
+    # transfer succeeds the assignment moves to Pending and stays a real
+    # historical event even if later Reset (Reset only flips IsActive, it
+    # deliberately never changes StatusID - see reset_file), so gating on
+    # StatusID being in a fixed terminal list would wrongly erase those.
     assigned_q = (
         select(cast(TaskAssignment.AssignedTS, Date), func.count())
         .where(
             TaskAssignment.AssignedTS >= first_day,
             TaskAssignment.AssignedTS < next_month_start,
-            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID.in_([complete_id, failed_id])),  # noqa: E712
+            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID != transferring_id),  # noqa: E712
         )
         .group_by(cast(TaskAssignment.AssignedTS, Date))
     )
@@ -114,6 +118,7 @@ def get_day(
 
     complete_id = _status_id(db, "Complete")
     failed_id = _status_id(db, "Failed")
+    transferring_id = _status_id(db, "Transferring")
 
     base_query = (
         select(TaskAssignment, User.Username, FileRecord.FileName, ProcessType.ProcessTypeName)
@@ -128,7 +133,7 @@ def get_day(
         base_query.where(
             TaskAssignment.AssignedTS >= target_date,
             TaskAssignment.AssignedTS < next_day,
-            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID.in_([complete_id, failed_id])),  # noqa: E712
+            or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID != transferring_id),  # noqa: E712
         )
     ).all()
     completion_rows = db.execute(

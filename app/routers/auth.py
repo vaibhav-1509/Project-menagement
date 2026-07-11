@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import secrets
+
 from app.database import get_db
 from app.models import User
 from app.schemas import ChangePasswordRequest, MeOut
@@ -17,7 +19,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if user is None or not user.IsActive or not verify_password(form_data.password, user.PasswordHash):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
-    token = create_access_token(user.UserID)
+    token = create_access_token(user.UserID, user.SecurityStamp)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -43,5 +45,11 @@ def change_password(
         raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
 
     current_user.PasswordHash = hash_password(payload.new_password)
+    # Rotating the stamp invalidates every token issued before this change -
+    # including, deliberately, the one used to make this very request. Issue
+    # a fresh one below so this session keeps working; any OTHER
+    # browser/device still holding the old token is now logged out for real.
+    current_user.SecurityStamp = secrets.token_hex(32)
     db.commit()
-    return {"status": "password_changed"}
+    new_token = create_access_token(current_user.UserID, current_user.SecurityStamp)
+    return {"status": "password_changed", "access_token": new_token, "token_type": "bearer"}

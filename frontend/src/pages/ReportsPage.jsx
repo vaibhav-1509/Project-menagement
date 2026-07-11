@@ -25,35 +25,38 @@ export default function ReportsPage() {
     if (isAdmin) api.getUsers().then(setUsers).catch(() => {})
   }, [isAdmin])
 
-  async function load() {
-    setLoading(true)
-    setError('')
-    try {
-      // Taxonomy Progress is an org-wide structural view (admin only) - a
-      // worker's own report is just their own completions, scoped server-side
-      // by the same /completions call everyone uses. When an admin picks a
-      // specific worker, that worker's own progress replaces the org-wide
-      // metric the same way it would if that worker viewed this page
-      // themselves - Taxonomy Progress stays the org-wide view regardless.
-      const completionsParams = { reference_date: referenceDate }
-      if (isAdmin && selectedUserId) completionsParams.user_id = selectedUserId
-      const [reportData, progressData] = await Promise.all([
-        api.getCompletionsReport(completionsParams),
-        isAdmin ? api.getTaxonomyProgressReport() : Promise.resolve(null),
-      ])
-      setReport(reportData)
-      setProgress(progressData)
-    } catch (err) {
-      setError(err.message || 'Failed to load reports')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError('')
+      try {
+        // Taxonomy Progress is an org-wide structural view (admin only) - a
+        // worker's own report is just their own completions, scoped server-side
+        // by the same /completions call everyone uses. When an admin picks a
+        // specific worker, that worker's own progress replaces the org-wide
+        // metric the same way it would if that worker viewed this page
+        // themselves - Taxonomy Progress stays the org-wide view regardless.
+        const completionsParams = { reference_date: referenceDate }
+        if (isAdmin && selectedUserId) completionsParams.user_id = selectedUserId
+        const [reportData, progressData] = await Promise.all([
+          api.getCompletionsReport(completionsParams),
+          isAdmin ? api.getTaxonomyProgressReport() : Promise.resolve(null),
+        ])
+        if (cancelled) return
+        setReport(reportData)
+        setProgress(progressData)
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to load reports')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceDate, selectedUserId])
+    return () => {
+      cancelled = true
+    }
+  }, [referenceDate, selectedUserId, isAdmin])
 
   const progressItems = progress ? progress[progressLevel] : []
   const selectedProgressItem = progressItems.find((i) => String(i.id) === String(progressNodeId)) || progressItems[0]

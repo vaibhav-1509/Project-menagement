@@ -139,6 +139,22 @@ def _table_exists(cursor, table: str) -> bool:
     return cursor.fetchone()[0] is not None
 
 
+def _migrate_add_security_stamp(cursor) -> None:
+    """Adds Users.SecurityStamp - embedded in every JWT and re-checked on
+    every request, so a password change/reset (or a full database wipe that
+    happens to recreate the same UserID) actually invalidates old tokens
+    instead of leaving them silently valid until they expire. NEWID() is
+    evaluated per row, so every existing user gets its own distinct backfilled
+    value, not one shared constant."""
+    print("Adding Users.SecurityStamp (invalidates old sessions on password change)...")
+    cursor.execute(
+        "ALTER TABLE Users ADD SecurityStamp NVARCHAR(64) NOT NULL "
+        "CONSTRAINT DF_Users_SecurityStamp DEFAULT CONVERT(NVARCHAR(64), NEWID())"
+    )
+    cursor.execute("UPDATE Users SET SecurityStamp = CONVERT(NVARCHAR(64), NEWID())")
+    print("Users.SecurityStamp added and backfilled.")
+
+
 def _migrate_add_failed_status(cursor) -> None:
     cursor.execute("SELECT 1 FROM FileStatuses WHERE StatusName = 'Failed'")
     if cursor.fetchone() is None:
@@ -371,6 +387,48 @@ def _migrate_create_user_roles(cursor) -> None:
     print("UserRoles created and backfilled - Users.RoleID retired.")
 
 
+def _migrate_fix_sp_create_first_admin(cursor) -> None:
+    """_migrate_create_user_roles retired Users.RoleID, but sp_CreateFirstAdmin
+    was never redefined to match on databases that had already applied the
+    base schema (apply_schema() only (re-)runs the CREATE PROCEDURE batch on a
+    brand new database - already-migrated ones skip straight to migrations).
+    CREATE OR ALTER is idempotent, so this always runs to guarantee the live
+    stored procedure matches sql/001_schema.sql regardless of when the
+    database was first created."""
+    cursor.execute(
+        """
+        CREATE OR ALTER PROCEDURE sp_CreateFirstAdmin
+            @Username       NVARCHAR(100),
+            @PasswordHash   NVARCHAR(255)
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+
+            IF EXISTS (
+                SELECT 1 FROM Users u
+                JOIN UserRoles ur ON ur.UserID = u.UserID
+                JOIN Roles r ON r.RoleID = ur.RoleID
+                WHERE r.RoleName = 'Admin'
+            )
+            BEGIN
+                RAISERROR('An Admin account already exists. sp_CreateFirstAdmin only bootstraps the very first admin.', 16, 1);
+                RETURN;
+            END
+
+            DECLARE @AdminRoleID INT = (SELECT RoleID FROM Roles WHERE RoleName = 'Admin');
+
+            INSERT INTO Users (Username, PasswordHash, PhaseID, IsActive)
+            VALUES (@Username, @PasswordHash, NULL, 1);
+
+            DECLARE @NewUserID INT = SCOPE_IDENTITY();
+            INSERT INTO UserRoles (UserID, RoleID) VALUES (@NewUserID, @AdminRoleID);
+
+            SELECT @NewUserID AS NewAdminUserID;
+        END
+        """
+    )
+
+
 def _index_exists(cursor, table: str, index_name: str) -> bool:
     cursor.execute(
         "SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(?) AND name = ?", table, index_name
@@ -412,6 +470,8 @@ def _migrate_add_fileprocessstatus_completion_index(cursor) -> None:
 def _run_migrations(cursor) -> None:
     """Ordered, idempotent post-install migrations - each checks its own
     precondition so re-running apply_schema() is always safe."""
+    if not _column_exists(cursor, "Users", "SecurityStamp"):
+        _migrate_add_security_stamp(cursor)
     if not _column_exists(cursor, "Categories", "PhaseID"):
         _migrate_categories_to_phase_scoped(cursor)
     if not _column_exists(cursor, "Phases", "IsActive"):
@@ -438,6 +498,7 @@ def _run_migrations(cursor) -> None:
         _migrate_add_taskassignments_date_indexes(cursor)
     if not _index_exists(cursor, "FileProcessStatus", "IX_FileProcessStatus_ProcessType_Status_Completion"):
         _migrate_add_fileprocessstatus_completion_index(cursor)
+    _migrate_fix_sp_create_first_admin(cursor)
 
 
 def apply_schema() -> None:

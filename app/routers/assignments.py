@@ -11,6 +11,7 @@ from app.security import get_current_user, require_admin, user_is_admin
 from app.services.file_transfer import (
     FileLockedError,
     TransferVerificationError,
+    assert_no_later_stage_started,
     complete_process_assignment,
     mark_assignment_failed,
     reopen_process_assignment,
@@ -24,31 +25,10 @@ def _status_id(db: Session, name: str) -> int:
 
 
 def _assert_no_later_stage_started(db: Session, file_id: int, process_type: ProcessType, action: str) -> None:
-    """Shared guard for Reset/Revoke - resetting or revoking an earlier stage
-    out from under a later stage that's already started would violate
-    sequential gating (e.g. undoing Polish while GLB is already assigned)."""
-    pending_status_id = _status_id(db, "Pending")
-    later_process_types = db.scalars(
-        select(ProcessType).where(ProcessType.IsActive == True, ProcessType.SortOrder > process_type.SortOrder)  # noqa: E712
-    ).all()
-    if not later_process_types:
-        return
-    later_stage_statuses = db.scalars(
-        select(FileProcessStatus).where(
-            FileProcessStatus.FileID == file_id,
-            FileProcessStatus.ProcessTypeID.in_([pt.ProcessTypeID for pt in later_process_types]),
-        )
-    ).all()
-    started = next(
-        (s for s in later_stage_statuses if s.StatusID != pending_status_id or s.AssignedToUserID is not None),
-        None,
-    )
-    if started is not None:
-        later_pt_name = next(pt.ProcessTypeName for pt in later_process_types if pt.ProcessTypeID == started.ProcessTypeID)
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cannot {action} {process_type.ProcessTypeName} - {later_pt_name} has already started. {action.capitalize()} {later_pt_name} first.",
-        )
+    try:
+        assert_no_later_stage_started(db, file_id, process_type, action)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/api/assignments/{assignment_id}/complete")

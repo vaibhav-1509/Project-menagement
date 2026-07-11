@@ -71,7 +71,13 @@ CREATE TABLE Users (
     PasswordHash    NVARCHAR(255) NOT NULL,
     PhaseID         INT NULL FOREIGN KEY REFERENCES Phases(PhaseID),  -- NULL for Admin
     IsActive        BIT NOT NULL DEFAULT 1,
-    CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    -- Embedded in every JWT and re-checked on every request (see
+    -- app/security.py get_current_user); rotated on every password
+    -- change/reset so old tokens die immediately instead of staying valid
+    -- until they naturally expire. DEFAULT NEWID() gives each row its own
+    -- random value with no application-side logic required on INSERT.
+    SecurityStamp   NVARCHAR(64) NOT NULL DEFAULT CONVERT(NVARCHAR(64), NEWID())
 );
 GO
 

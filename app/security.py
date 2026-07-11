@@ -24,9 +24,14 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(user_id: int, security_stamp: str) -> str:
+    # security_stamp is re-checked against the live User row on every request
+    # (see get_current_user) - it's what makes a password change/reset, or a
+    # full database wipe that happens to recreate the same UserID, actually
+    # invalidate previously issued tokens instead of leaving them silently
+    # valid until they naturally expire.
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expires_minutes)
-    payload = {"sub": str(user_id), "exp": expire}
+    payload = {"sub": str(user_id), "sst": security_stamp, "exp": expire}
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
@@ -45,11 +50,18 @@ def get_current_user(
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         user_id = int(payload.get("sub"))
+        token_stamp = payload.get("sst")
     except (JWTError, TypeError, ValueError):
         raise credentials_error
 
     user = db.get(User, user_id, options=[selectinload(User.roles)])
     if user is None or not user.IsActive:
+        raise credentials_error
+    # Reject tokens issued before the account's last password change/reset,
+    # or against a since-deleted-and-recreated account that happens to reuse
+    # the same UserID (e.g. after a full database wipe) - the stamp for that
+    # is a fresh random value, so an old token's "sst" can never match it.
+    if token_stamp != user.SecurityStamp:
         raise credentials_error
     return user
 
