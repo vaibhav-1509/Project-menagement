@@ -12,13 +12,32 @@ from app.security import create_access_token, get_current_user, hash_password, v
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+MAX_FAILED_LOGIN_ATTEMPTS = 3
+
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Deliberately one generic message for "no such user", "wrong password",
+    # and "deactivated" (whether an admin did that manually or 3 failed
+    # attempts just did it below) - reusing the existing IsActive gate as-is
+    # rather than a separate lockout flag/message means a locked-out account
+    # looks identical to any other deactivated one, both to an attacker
+    # probing usernames and in the code path itself.
     user = db.scalar(select(User).where(User.Username == form_data.username))
-    if user is None or not user.IsActive or not verify_password(form_data.password, user.PasswordHash):
+    if user is None or not user.IsActive:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
+    if not verify_password(form_data.password, user.PasswordHash):
+        user.FailedLoginCount += 1
+        if user.FailedLoginCount >= MAX_FAILED_LOGIN_ATTEMPTS:
+            # Same effect as an admin clicking Deactivate on the Users page -
+            # requires that same admin permission to reactivate.
+            user.IsActive = False
+        db.commit()
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+
+    user.FailedLoginCount = 0
+    db.commit()
     token = create_access_token(user.UserID, user.SecurityStamp)
     return {"access_token": token, "token_type": "bearer"}
 

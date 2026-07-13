@@ -49,6 +49,16 @@ export default function UsersPage() {
     }
   }
 
+  async function handleSetActive(user, isActive) {
+    setError('')
+    try {
+      await api.setUserActive(user.UserID, isActive)
+      await load()
+    } catch (err) {
+      setError(err.message || 'Failed to update user')
+    }
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -95,6 +105,17 @@ export default function UsersPage() {
                       <button onClick={() => setEditTarget(u)}>Edit</button>
                       <button className="secondary" onClick={() => setResetTarget(u)}>
                         Reset Password
+                      </button>
+                      <button
+                        className="secondary"
+                        onClick={() => handleSetActive(u, !u.IsActive)}
+                        title={
+                          u.IsActive
+                            ? 'Deactivate - also what happens automatically after 3 failed login attempts'
+                            : 'Reactivate this user'
+                        }
+                      >
+                        {u.IsActive ? 'Deactivate' : 'Activate'}
                       </button>
                       <button className="secondary" onClick={() => handleDelete(u)}>
                         Delete

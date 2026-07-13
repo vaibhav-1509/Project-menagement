@@ -31,9 +31,12 @@ def reset_password(username: str, new_password: str) -> None:
         cursor = conn.cursor()
         # Also rotates SecurityStamp so any session token issued before this
         # reset stops working immediately, instead of remaining valid until
-        # it naturally expires (see app/security.py's get_current_user).
+        # it naturally expires (see app/security.py's get_current_user), and
+        # clears any login lockout - this script exists for recovery, and a
+        # locked-out sole admin with no one else to unlock them is exactly
+        # the scenario it needs to cover.
         cursor.execute(
-            "UPDATE Users SET PasswordHash = ?, SecurityStamp = ? WHERE Username = ?",
+            "UPDATE Users SET PasswordHash = ?, SecurityStamp = ?, FailedLoginCount = 0, IsLocked = 0 WHERE Username = ?",
             hash_password(new_password),
             secrets.token_hex(32),
             username,

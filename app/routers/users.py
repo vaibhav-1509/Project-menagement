@@ -11,6 +11,7 @@ from app.models import AuditTrail, ImportBatch, ProcessType, Role, TaskAssignmen
 from app.schemas import (
     CreateUserRequest,
     ResetPasswordRequest,
+    SetActiveRequest,
     UpdateUserRequest,
     UserOut,
     WorkerProcessPathIn,
@@ -143,6 +144,46 @@ def admin_reset_password(
     user.SecurityStamp = secrets.token_hex(32)
     db.commit()
     return {"status": "password_reset"}
+
+
+@router.patch("/{user_id}", response_model=UserOut)
+def set_user_active(
+    user_id: int,
+    payload: SetActiveRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """One-click Deactivate/Activate, separate from the full Edit form (which
+    also requires re-submitting roles/phase). This is the SAME mechanism the
+    login lockout uses: 3 consecutive failed attempts deactivates a user
+    exactly like an admin manually deactivating them (see app/routers/auth.py)
+    - one flag, one button, instead of a parallel lockout concept. Admins can
+    also use this to lock an account down themselves at any time."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if (
+        not payload.is_active
+        and user_is_admin(user)
+        and user.IsActive
+        and _active_admin_count(db, exclude_user_id=user_id) == 0
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot deactivate the last active Admin - promote another user to Admin first.",
+        )
+
+    user.IsActive = payload.is_active
+    if payload.is_active:
+        # Reactivating (whether from a manual deactivation or an automatic
+        # lockout) clears the failed-attempt counter - otherwise a single
+        # wrong password right after reactivation would immediately
+        # re-deactivate them.
+        user.FailedLoginCount = 0
+    db.commit()
+    db.refresh(user)
+    return _to_user_out(db, user)
 
 
 @router.delete("/{user_id}")

@@ -41,6 +41,19 @@ export function AuthProvider({ children }) {
     setUsername(null)
   }
 
+  // client.js's request() clears storage and fires this the moment ANY API
+  // call comes back 401 (expired/invalidated session) - clearing state here
+  // in turn makes every ProtectedRoute re-render and redirect to /login,
+  // from whatever page the user happens to be on.
+  useEffect(() => {
+    function handleUnauthorized() {
+      setToken(null)
+      setUsername(null)
+    }
+    window.addEventListener('pmt:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('pmt:unauthorized', handleUnauthorized)
+  }, [])
+
   // client.js's changePassword() writes a fresh token straight to
   // localStorage (to keep this session alive through a self-service password
   // change, since the backend rotates the account's session-invalidation

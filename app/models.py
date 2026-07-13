@@ -94,6 +94,13 @@ class User(Base):
     # recreated, or (via a full database wipe) the whole row is replaced -
     # even if the new row happens to reuse the same UserID.
     SecurityStamp: Mapped[str] = mapped_column(String(64), default=lambda: secrets.token_hex(32))
+    # Counts consecutive wrong-password attempts; reset to 0 on a successful
+    # login or whenever the account is (re)activated. Reaching
+    # MAX_FAILED_LOGIN_ATTEMPTS (app/routers/auth.py) sets IsActive=False -
+    # the exact same Deactivate an admin can click manually, rather than a
+    # separate lockout flag - so reactivating (admin permission required)
+    # already works via the existing Activate/Deactivate toggle.
+    FailedLoginCount: Mapped[int] = mapped_column(Integer, default=0)
 
     roles: Mapped[list["Role"]] = relationship(secondary=UserRoles, back_populates="users")
 

@@ -155,6 +155,35 @@ def _migrate_add_security_stamp(cursor) -> None:
     print("Users.SecurityStamp added and backfilled.")
 
 
+def _migrate_add_login_lockout(cursor) -> None:
+    """Adds Users.FailedLoginCount - 3 consecutive wrong passwords deactivates
+    the account (IsActive=False) exactly like an admin's Deactivate button,
+    reusing that existing gate/toggle rather than a separate lockout flag."""
+    print("Adding Users.FailedLoginCount (login lockout counter)...")
+    cursor.execute("ALTER TABLE Users ADD FailedLoginCount INT NOT NULL CONSTRAINT DF_Users_FailedLoginCount DEFAULT 0")
+    print("Users.FailedLoginCount added.")
+
+
+def _migrate_drop_is_locked(cursor) -> None:
+    """IsLocked briefly existed as a separate lockout flag before being folded
+    into the existing IsActive/Deactivate mechanism - drops it if an earlier
+    run of this migration already added it."""
+    print("Dropping Users.IsLocked (folded into IsActive)...")
+    cursor.execute(
+        """
+        DECLARE @constraintName NVARCHAR(200);
+        SELECT @constraintName = dc.name
+        FROM sys.default_constraints dc
+        JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id
+        WHERE dc.parent_object_id = OBJECT_ID('Users') AND c.name = 'IsLocked';
+        IF @constraintName IS NOT NULL
+            EXEC('ALTER TABLE Users DROP CONSTRAINT [' + @constraintName + ']');
+        """
+    )
+    cursor.execute("ALTER TABLE Users DROP COLUMN IsLocked")
+    print("Users.IsLocked dropped.")
+
+
 def _migrate_add_failed_status(cursor) -> None:
     cursor.execute("SELECT 1 FROM FileStatuses WHERE StatusName = 'Failed'")
     if cursor.fetchone() is None:
@@ -472,6 +501,10 @@ def _run_migrations(cursor) -> None:
     precondition so re-running apply_schema() is always safe."""
     if not _column_exists(cursor, "Users", "SecurityStamp"):
         _migrate_add_security_stamp(cursor)
+    if not _column_exists(cursor, "Users", "FailedLoginCount"):
+        _migrate_add_login_lockout(cursor)
+    if _column_exists(cursor, "Users", "IsLocked"):
+        _migrate_drop_is_locked(cursor)
     if not _column_exists(cursor, "Categories", "PhaseID"):
         _migrate_categories_to_phase_scoped(cursor)
     if not _column_exists(cursor, "Phases", "IsActive"):

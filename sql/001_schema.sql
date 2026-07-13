@@ -77,7 +77,12 @@ CREATE TABLE Users (
     -- change/reset so old tokens die immediately instead of staying valid
     -- until they naturally expire. DEFAULT NEWID() gives each row its own
     -- random value with no application-side logic required on INSERT.
-    SecurityStamp   NVARCHAR(64) NOT NULL DEFAULT CONVERT(NVARCHAR(64), NEWID())
+    SecurityStamp   NVARCHAR(64) NOT NULL DEFAULT CONVERT(NVARCHAR(64), NEWID()),
+    -- Login lockout: increments on each wrong password, resets to 0 on
+    -- success or reactivation. Reaching the app's MAX_FAILED_LOGIN_ATTEMPTS
+    -- sets IsActive=0 above - the same Deactivate an admin can click
+    -- manually, not a separate lockout flag.
+    FailedLoginCount INT NOT NULL DEFAULT 0
 );
 GO
 

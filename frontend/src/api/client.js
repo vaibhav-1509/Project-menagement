@@ -31,6 +31,18 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
     body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
   })
 
+  if (res.status === 401) {
+    // The token is invalid - expired, rotated by a password change/reset
+    // elsewhere, or (after a full data wipe) simply doesn't match any
+    // account anymore. Clear it and tell AuthContext so every protected
+    // route redirects to /login from wherever the user currently is,
+    // instead of leaving them stuck on a page where every action silently
+    // 401s forever.
+    setToken(null)
+    setUsername(null)
+    window.dispatchEvent(new Event('pmt:unauthorized'))
+  }
+
   if (!res.ok) {
     let detail = res.statusText
     try {
@@ -57,7 +69,16 @@ export async function login(username, password) {
     body: form,
   })
   if (!res.ok) {
-    throw new Error('Incorrect username or password')
+    // Surface the backend's actual message (wrong credentials vs. account
+    // locked are meaningfully different) instead of a single hardcoded string.
+    let detail = 'Incorrect username or password'
+    try {
+      const data = await res.json()
+      detail = data.detail || detail
+    } catch {
+      // response wasn't JSON - keep the default message
+    }
+    throw new Error(detail)
   }
   const data = await res.json()
   setToken(data.access_token)
@@ -106,6 +127,10 @@ export function adminResetPassword(userId, newPassword) {
 
 export function deleteUser(userId) {
   return request(`/admin/users/${userId}`, { method: 'DELETE' })
+}
+
+export function setUserActive(userId, isActive) {
+  return request(`/admin/users/${userId}`, { method: 'PATCH', body: { is_active: isActive } })
 }
 
 export async function changePassword(currentPassword, newPassword) {
