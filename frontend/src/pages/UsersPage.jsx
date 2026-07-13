@@ -38,6 +38,16 @@ export default function UsersPage() {
     return lookups.phases.find((p) => p.id === phaseId)?.name || `#${phaseId}`
   }
 
+  // Mirrors the backend's last-active-admin guard (see users.py's
+  // _active_admin_count) - hiding the button here instead of just letting
+  // the click 400 avoids a confusing dead-end and the risk of someone
+  // deactivating the only admin account and locking everyone out of admin
+  // functions until a DB-level fix.
+  const activeAdminCount = users.filter((u) => u.IsActive && u.roleNames.includes('Admin')).length
+  function isSoleActiveAdmin(u) {
+    return u.IsActive && u.roleNames.includes('Admin') && activeAdminCount <= 1
+  }
+
   async function handleDelete(user) {
     if (!window.confirm(`Delete user "${user.Username}"? This cannot be undone.`)) return
     setError('')
@@ -106,17 +116,19 @@ export default function UsersPage() {
                       <button className="secondary" onClick={() => setResetTarget(u)}>
                         Reset Password
                       </button>
-                      <button
-                        className="secondary"
-                        onClick={() => handleSetActive(u, !u.IsActive)}
-                        title={
-                          u.IsActive
-                            ? 'Deactivate - also what happens automatically after 3 failed login attempts'
-                            : 'Reactivate this user'
-                        }
-                      >
-                        {u.IsActive ? 'Deactivate' : 'Activate'}
-                      </button>
+                      {!isSoleActiveAdmin(u) && (
+                        <button
+                          className="secondary"
+                          onClick={() => handleSetActive(u, !u.IsActive)}
+                          title={
+                            u.IsActive
+                              ? 'Deactivate - also what happens automatically after 3 failed login attempts'
+                              : 'Reactivate this user'
+                          }
+                        >
+                          {u.IsActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      )}
                       <button className="secondary" onClick={() => handleDelete(u)}>
                         Delete
                       </button>

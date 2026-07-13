@@ -39,6 +39,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Defense-in-depth response headers - none of these are a substitute for the
+# auth/authorization checks in each router, but they close off classes of
+# browser-side attack (clickjacking, MIME-sniffing, leaking the URL to a
+# third-party Referer) that a JWT check alone doesn't. No Strict-Transport-
+# Security here deliberately: this app is typically reached over plain HTTP
+# on a local network, and HSTS would tell browsers to refuse to fall back to
+# HTTP later, which would lock people out on a deployment with no TLS
+# terminator in front of it - add it yourself once this sits behind HTTPS.
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # Same-origin SPA (frontend/dist), no inline scripts in the build itself -
+    # see frontend/dist/index.html - so script-src stays strict. style-src
+    # needs 'unsafe-inline': AG Grid's Theming API (ag-grid-community v33+,
+    # see FilesGrid.jsx's `theme={themeQuartz}`) injects its CSS into a
+    # runtime <style> tag rather than a static stylesheet - a strict
+    # style-src silently blocks that and the grid renders as unstyled plain
+    # text (reproduced after the first real post-redeploy browser load).
+    # Inline styles are a far smaller XSS surface than inline scripts, so
+    # this trade keeps the meaningful protection (script-src) intact.
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+        "frame-ancestors 'none'; base-uri 'self'"
+    )
+    return response
+
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(imports.router)

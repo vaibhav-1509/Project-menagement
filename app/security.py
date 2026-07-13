@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, status
@@ -14,6 +15,13 @@ from app.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+# A bcrypt hash of a value nobody will ever type, used as the comparison
+# target when a username doesn't exist - see auth.py's login(). Verifying
+# against this (instead of skipping verification entirely) costs the same
+# bcrypt work as a real check, so response time doesn't leak whether the
+# username exists.
+DUMMY_PASSWORD_HASH = pwd_context.hash(secrets.token_hex(32))
 
 
 def hash_password(plain: str) -> str:

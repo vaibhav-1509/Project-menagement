@@ -3,3 +3,6 @@
 __pycache__/
 *.pyc
 graphify-out/cache/
+# TDE certificate + private key backup (scripts/setup_tde.py) - as sensitive
+# as the database password; move it to secure offline storage, never git.
+tde-backup/

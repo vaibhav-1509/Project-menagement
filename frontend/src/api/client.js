@@ -334,6 +334,63 @@ export function getTaxonomyProgressReport() {
   return request('/reports/taxonomy-progress')
 }
 
+async function downloadFile(path, filenameFallback) {
+  // Binary response (xlsx/pdf) - can't use a plain <a href> because the
+  // endpoint needs the Bearer token, so fetch it manually and hand the
+  // browser a blob: URL to actually save it.
+  const token = getToken()
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await fetch(`/api${path}`, { headers })
+
+  if (res.status === 401) {
+    setToken(null)
+    setUsername(null)
+    window.dispatchEvent(new Event('pmt:unauthorized'))
+  }
+  if (!res.ok) {
+    let detail = res.statusText
+    try {
+      const data = await res.json()
+      detail = data.detail || detail
+    } catch {
+      // response wasn't JSON - keep the status text
+    }
+    throw new Error(detail)
+  }
+
+  const blob = await res.blob()
+  const disposition = res.headers.get('Content-Disposition') || ''
+  const match = disposition.match(/filename="?([^"]+)"?/)
+  const filename = match ? match[1] : filenameFallback
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function _exportQueryString(params) {
+  return new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  ).toString()
+}
+
+export function exportReportExcel(params = {}) {
+  const qs = _exportQueryString(params)
+  return downloadFile(`/reports/export/excel${qs ? `?${qs}` : ''}`, 'completions_report.xlsx')
+}
+
+export function exportReportPdf(params = {}) {
+  const qs = _exportQueryString(params)
+  return downloadFile(`/reports/export/pdf${qs ? `?${qs}` : ''}`, 'completions_report.pdf')
+}
+
 export function getWorkerProcessPaths(userId) {
   return request(`/admin/users/${userId}/process-paths`)
 }

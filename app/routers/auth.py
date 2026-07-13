@@ -8,7 +8,7 @@ import secrets
 from app.database import get_db
 from app.models import User
 from app.schemas import ChangePasswordRequest, MeOut
-from app.security import create_access_token, get_current_user, hash_password, verify_password
+from app.security import DUMMY_PASSWORD_HASH, create_access_token, get_current_user, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -24,16 +24,23 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     # looks identical to any other deactivated one, both to an attacker
     # probing usernames and in the code path itself.
     user = db.scalar(select(User).where(User.Username == form_data.username))
-    if user is None or not user.IsActive:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
 
-    if not verify_password(form_data.password, user.PasswordHash):
-        user.FailedLoginCount += 1
-        if user.FailedLoginCount >= MAX_FAILED_LOGIN_ATTEMPTS:
-            # Same effect as an admin clicking Deactivate on the Users page -
-            # requires that same admin permission to reactivate.
-            user.IsActive = False
-        db.commit()
+    # Always run a bcrypt verify, even for a username that doesn't exist -
+    # against DUMMY_PASSWORD_HASH in that case - so a nonexistent-user
+    # response takes the same time as a wrong-password one. Skipping this
+    # for unknown usernames would let an attacker enumerate valid accounts
+    # purely from response latency (bcrypt verification dominates request time).
+    password_hash = user.PasswordHash if user is not None else DUMMY_PASSWORD_HASH
+    password_ok = verify_password(form_data.password, password_hash)
+
+    if user is None or not user.IsActive or not password_ok:
+        if user is not None and user.IsActive and not password_ok:
+            user.FailedLoginCount += 1
+            if user.FailedLoginCount >= MAX_FAILED_LOGIN_ATTEMPTS:
+                # Same effect as an admin clicking Deactivate on the Users page -
+                # requires that same admin permission to reactivate.
+                user.IsActive = False
+            db.commit()
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
     user.FailedLoginCount = 0

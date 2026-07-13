@@ -79,11 +79,14 @@ This single script:
    any that are missing.
 3. Creates a virtual environment and installs all Python dependencies.
 4. Creates the database (if it doesn't exist yet) and applies the schema.
-5. Creates the first **Admin** account and prints its username and password
+5. Optionally enables **Transparent Data Encryption** (at-rest disk
+   encryption, requires SQL Server Standard/Enterprise/Developer - not
+   Express) - see [Encryption](#encryption) below before turning this on.
+6. Creates the first **Admin** account and prints its username and password
    to the console **once** - save it immediately, it is never shown again and
    never written to disk.
-6. Installs frontend dependencies and builds the production bundle.
-7. Prints the command to start the app, and offers to start it right away.
+7. Installs frontend dependencies and builds the production bundle.
+8. Prints the command to start the app, and offers to start it right away.
 
 `deploy.ps1` is safe to re-run - every step detects existing state (venv,
 database, schema, admin account, frontend build) and reuses it instead of
@@ -98,6 +101,37 @@ Once deployed, start the app with:
 
 and open **http://localhost:8000** - one process serves both the API and the
 built UI.
+
+## Encryption
+
+Two independent layers, both optional to reason about separately:
+
+- **In transit** - the app's connection to SQL Server always uses
+  `Encrypt=yes` (with `TrustServerCertificate=yes` for a typical self-signed
+  local/LAN SQL Server certificate). This is on unconditionally; there's
+  nothing to configure.
+- **At rest** (Transparent Data Encryption) - encrypts the database's own
+  files on disk. Optional, offered during step 5 of `deploy.ps1`, and only
+  available on SQL Server Standard, Enterprise, or Developer edition (not
+  Express). Enable it later at any time with:
+
+  ```powershell
+  .venv\Scripts\python.exe scripts\setup_tde.py
+  ```
+
+  The **first time** it runs, it creates a certificate on the SQL Server
+  instance and backs it up to `.\tde-backup\` (a `.cer` + `.pvk` file and a
+  `README.txt` with the passwords). **That folder is as sensitive as your
+  database password** - it's the only way to ever restore a native SQL
+  Server backup (`.bak`) of this database on a different or rebuilt SQL
+  Server instance. Move it to secure, offline storage and don't leave it
+  sitting on this machine. Neither `deploy.ps1` nor `cleanup.ps1` ever reads,
+  writes, or deletes anything in `tde-backup\` - it's untouched by both.
+
+  Re-running `.\deploy.ps1` (including after `.\cleanup.ps1` wipes the
+  database) reuses the existing certificate automatically, since
+  `cleanup.ps1` only drops the app's database, never SQL Server's `master`
+  database where the certificate lives.
 
 ## Starting over / cleaning up
 

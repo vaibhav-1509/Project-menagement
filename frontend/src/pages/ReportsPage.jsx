@@ -21,6 +21,10 @@ export default function ReportsPage() {
   const [users, setUsers] = useState([])
   const [selectedUserId, setSelectedUserId] = useState('') // admin-only: '' = whole team
 
+  const [exportRange, setExportRange] = useState('month')
+  const [exporting, setExporting] = useState('') // '' | 'excel' | 'pdf'
+  const [exportError, setExportError] = useState('')
+
   useEffect(() => {
     if (isAdmin) api.getUsers().then(setUsers).catch(() => {})
   }, [isAdmin])
@@ -61,6 +65,21 @@ export default function ReportsPage() {
   const progressItems = progress ? progress[progressLevel] : []
   const selectedProgressItem = progressItems.find((i) => String(i.id) === String(progressNodeId)) || progressItems[0]
 
+  async function handleExport(kind) {
+    setExportError('')
+    setExporting(kind)
+    try {
+      const params = { range: exportRange, reference_date: referenceDate }
+      if (isAdmin && selectedUserId) params.user_id = selectedUserId
+      if (kind === 'excel') await api.exportReportExcel(params)
+      else await api.exportReportPdf(params)
+    } catch (err) {
+      setExportError(err.message || `Failed to export ${kind}`)
+    } finally {
+      setExporting('')
+    }
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -91,9 +110,37 @@ export default function ReportsPage() {
             Reference date
             <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
           </label>
+          <label>
+            Export range
+            <select value={exportRange} onChange={(e) => setExportRange(e.target.value)}>
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+            </select>
+          </label>
+          <div className="reports-export-actions">
+            <button
+              className="secondary"
+              disabled={exporting !== ''}
+              onClick={() => handleExport('excel')}
+              title="Excel: file name, process type, assigned/completion timestamps for the selected range and user"
+            >
+              {exporting === 'excel' ? 'Exporting...' : 'Export Excel'}
+            </button>
+            <button
+              className="secondary"
+              disabled={exporting !== ''}
+              onClick={() => handleExport('pdf')}
+              title="PDF: full report including charts for the selected range and user"
+            >
+              {exporting === 'pdf' ? 'Exporting...' : 'Export PDF'}
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
+        {exportError && <div className="error-banner">{exportError}</div>}
         {loading || !report ? (
           <div className="loading">Loading...</div>
         ) : (

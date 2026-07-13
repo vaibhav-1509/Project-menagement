@@ -1,7 +1,7 @@
 import calendar as calendar_module
 from datetime import date as date_cls, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import Date, cast, false, func, select
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,7 @@ from app.schemas import (
     YearSeriesOut,
 )
 from app.security import get_current_user, require_admin, user_is_admin
+from app.services.reports_export import RANGE_CHOICES, build_excel_report, build_pdf_report
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -247,3 +248,66 @@ def get_taxonomy_progress(
     sub_categories = _progress_items(subcategory_name_by_id, total_by_subcategory, completed_by_subcategory)
 
     return TaxonomyProgressOut(phases=phases, categories=categories, subCategories=sub_categories)
+
+
+def _safe_filename_part(label: str) -> str:
+    return "".join(c if c.isalnum() or c in "-_" else "_" for c in label)
+
+
+def _resolve_export_target(db: Session, current_user: User, range_key: str, user_id: int | None) -> tuple[int | None, str | None]:
+    if range_key not in RANGE_CHOICES:
+        raise HTTPException(status_code=400, detail=f"range must be one of {', '.join(RANGE_CHOICES)}")
+    scoped_user_id = _scope_user_id(current_user, user_id)
+    username = None
+    if scoped_user_id is not None:
+        target = db.get(User, scoped_user_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        username = target.Username
+    return scoped_user_id, username
+
+
+@router.get("/export/excel")
+def export_excel(
+    range: str = "month",
+    reference_date: str | None = None,
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Flat, filterable ledger for the selected range/user - one row per
+    process-stage attempt with both its Assigned and Completion timestamp
+    (see reports_export.py's _detail_rows)."""
+    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    scoped_user_id, username = _resolve_export_target(db, current_user, range, user_id)
+
+    content, label = build_excel_report(db, scoped_user_id, username, range, ref)
+    filename = f"completions_{_safe_filename_part(label)}.xlsx"
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/export/pdf")
+def export_pdf(
+    range: str = "month",
+    reference_date: str | None = None,
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Self-contained PDF snapshot for the selected range/user - the same
+    completions-over-time and per-process-type charts the Reports page shows
+    on screen (rendered server-side), plus the full activity ledger."""
+    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    scoped_user_id, username = _resolve_export_target(db, current_user, range, user_id)
+
+    content, label = build_pdf_report(db, scoped_user_id, username, range, ref)
+    filename = f"completions_{_safe_filename_part(label)}.pdf"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

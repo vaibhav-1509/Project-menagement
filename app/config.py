@@ -33,9 +33,15 @@ class Settings(BaseSettings):
         user = quote_plus(self.db_user)
         password = quote_plus(self.db_password)
         driver = quote_plus(self.db_driver)
+        # Encrypt=yes turns on TLS for the SQL Server connection itself (distinct
+        # from the app's own HTTPS story) - ODBC Driver 17 defaults to no
+        # encryption at all, so without this every query/password hash travels
+        # the wire in plaintext. TrustServerCertificate=yes is paired with it
+        # because a local/LAN SQL Server instance normally only has a
+        # self-signed certificate, not one issued by a CA the client trusts.
         return (
             f"mssql+pyodbc://{user}:{password}@{self.db_server}:{self.db_port}/{database}"
-            f"?driver={driver}&TrustServerCertificate=yes"
+            f"?driver={driver}&Encrypt=yes&TrustServerCertificate=yes"
         )
 
     @property

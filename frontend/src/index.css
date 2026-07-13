@@ -1,43 +1,25 @@
 :root {
-  --text: #3f3d45;
-  --text-h: #0c0a10;
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --border: #e2e1e6;
-  --accent: #5b3df0;
-  --accent-hover: #4b31d1;
-  --danger: #d0453b;
-  --danger-bg: #fdeceb;
-  --warning: #9a6400;
-  --warning-bg: #fdf3db;
-  --sidebar-bg: #171522;
-  --sidebar-text: #c9c6d6;
+  /* Dark UI everywhere, regardless of OS/browser preference - see
+     FilesGrid.jsx's darkGridTheme for the AG Grid side of this. */
+  --text: #d8d6e0;
+  --text-h: #f5f4f8;
+  --bg: #121116;
+  --surface: #1b1a22;
+  --border: #2c2a35;
+  --accent: #8a72ff;
+  --accent-hover: #a08cff;
+  --danger: #ff8079;
+  --danger-bg: #3a1d1c;
+  --warning: #e0b34d;
+  --warning-bg: #3a2f14;
+  --sidebar-bg: #0d0c12;
+  --sidebar-text: #a6a3b5;
   --sidebar-text-active: #ffffff;
 
   font: 15px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #d8d6e0;
-    --text-h: #f5f4f8;
-    --bg: #121116;
-    --surface: #1b1a22;
-    --border: #2c2a35;
-    --accent: #8a72ff;
-    --accent-hover: #a08cff;
-    --danger: #ff8079;
-    --danger-bg: #3a1d1c;
-    --warning: #e0b34d;
-    --warning-bg: #3a2f14;
-    --sidebar-bg: #0d0c12;
-    --sidebar-text: #a6a3b5;
-    --sidebar-text-active: #ffffff;
-    color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 
 * {
@@ -680,6 +662,12 @@ textarea {
   align-items: center;
   gap: 8px !important;
   font-size: 13px;
+}
+
+.reports-export-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .reports-stat-row {

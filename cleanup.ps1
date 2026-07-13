@@ -69,7 +69,7 @@ Write-Host ""
 Write-Host "Connecting to $dbServer`:$dbPort ..." -ForegroundColor Cyan
 Add-Type -AssemblyName System.Data
 
-$masterConnString = "Server=$dbServer,$dbPort;Database=master;User Id=$dbUser;Password=$dbPasswordPlain;TrustServerCertificate=True;"
+$masterConnString = "Server=$dbServer,$dbPort;Database=master;User Id=$dbUser;Password=$dbPasswordPlain;Encrypt=True;TrustServerCertificate=True;"
 try {
     $conn = New-Object System.Data.SqlClient.SqlConnection $masterConnString
     $conn.Open()

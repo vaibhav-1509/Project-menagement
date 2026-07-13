@@ -11,10 +11,12 @@
 #      and offers to install any that are missing via winget.
 #   3. Creates a virtual environment and installs all Python dependencies.
 #   4. Creates the database (if missing) and applies/updates the schema.
-#   5. Creates the first Admin account and prints its password ONCE.
+#   5. Optionally enables Transparent Data Encryption (at-rest, requires SQL
+#      Server Standard/Enterprise/Developer - skips itself on Express).
+#   6. Creates the first Admin account and prints its password ONCE.
 #      (Skipped automatically if an Admin already exists.)
-#   6. Installs frontend dependencies and builds the production bundle.
-#   7. Prints how to start the app.
+#   7. Installs frontend dependencies and builds the production bundle.
+#   8. Prints how to start the app.
 #
 # Safe to re-run: every step is idempotent (existing venv/database/admin/
 # frontend build are detected and reused rather than recreated).
@@ -72,9 +74,9 @@ Write-Host " Project Management Tool - Deployment" -ForegroundColor Green
 Write-Host "=============================================================" -ForegroundColor Green
 
 # ---------------------------------------------------------------------------
-# Step 1/7 - .env
+# Step 1/8 - .env
 # ---------------------------------------------------------------------------
-Write-Step "1/7 Checking .env configuration"
+Write-Step "1/8 Checking .env configuration"
 
 if (-not (Test-Path ".env")) {
     Write-Host "  No .env found - let's create one." -ForegroundColor Yellow
@@ -118,9 +120,9 @@ if (-not (Test-Path ".env")) {
 }
 
 # ---------------------------------------------------------------------------
-# Step 2/7 - Python + virtual environment + dependencies
+# Step 2/8 - Python + virtual environment + dependencies
 # ---------------------------------------------------------------------------
-Write-Step "2/7 Python environment and dependencies"
+Write-Step "2/8 Python environment and dependencies"
 
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Host "  Python was not found on PATH." -ForegroundColor Red
@@ -159,9 +161,9 @@ Invoke-Step "dependency install" { & $venvPython -m pip install -r requirements.
 Invoke-Step "editable install of app package" { & $venvPython -m pip install -e . --quiet }
 
 # ---------------------------------------------------------------------------
-# Step 3/7 - ODBC Driver for SQL Server
+# Step 3/8 - ODBC Driver for SQL Server
 # ---------------------------------------------------------------------------
-Write-Step "3/7 Checking ODBC Driver for SQL Server"
+Write-Step "3/8 Checking ODBC Driver for SQL Server"
 
 $driverCheck = & $venvPython -c "import pyodbc; from app.config import settings; print(settings.db_driver in pyodbc.drivers())"
 if ($driverCheck -notmatch "True") {
@@ -174,9 +176,9 @@ if ($driverCheck -notmatch "True") {
 }
 
 # ---------------------------------------------------------------------------
-# Step 4/7 - Database + schema
+# Step 4/8 - Database + schema
 # ---------------------------------------------------------------------------
-Write-Step "4/7 Creating database and applying schema"
+Write-Step "4/8 Creating database and applying schema"
 
 $dbServerForCheck = (Get-Content ".env" | Where-Object { $_ -match '^DB_SERVER=' }) -replace '^DB_SERVER=', ''
 $dbPortForCheck = (Get-Content ".env" | Where-Object { $_ -match '^DB_PORT=' }) -replace '^DB_PORT=', ''
@@ -191,15 +193,32 @@ if ($dbServerForCheck -and $dbPortForCheck) {
 Invoke-Step "database creation" { & $venvPython scripts\create_database.py }
 
 # ---------------------------------------------------------------------------
-# Step 5/7 - First Admin account
+# Step 5/8 - Transparent Data Encryption (optional, at-rest encryption)
 # ---------------------------------------------------------------------------
-Write-Step "5/7 Creating first Admin account"
+Write-Step "5/8 Transparent Data Encryption (optional)"
+Write-Host "  Encrypts the database's own files on disk (separate from the TLS" -ForegroundColor Cyan
+Write-Host "  connection already in place). Requires SQL Server Standard, Enterprise," -ForegroundColor Cyan
+Write-Host "  or Developer edition - not supported on Express." -ForegroundColor Cyan
+$enableTde = Read-Host "  Enable Transparent Data Encryption now? (y/N)"
+if ($enableTde -match '^[Yy]') {
+    Invoke-Step "TDE setup" { & $venvPython scripts\setup_tde.py }
+    Write-Host "  If a new certificate was just created, its backup is in .\tde-backup\ -" -ForegroundColor Yellow
+    Write-Host "  move that folder to secure OFFLINE storage. See tde-backup\README.txt." -ForegroundColor Yellow
+} else {
+    Write-Host "  Skipped. Re-run .\deploy.ps1 later to enable it, or run:" -ForegroundColor Yellow
+    Write-Host "  .venv\Scripts\python.exe scripts\setup_tde.py" -ForegroundColor Cyan
+}
+
+# ---------------------------------------------------------------------------
+# Step 6/8 - First Admin account
+# ---------------------------------------------------------------------------
+Write-Step "6/8 Creating first Admin account"
 Invoke-Step "admin account creation" { & $venvPython scripts\create_admin.py }
 
 # ---------------------------------------------------------------------------
-# Step 6/7 - Node.js + frontend dependencies
+# Step 7/8 - Node.js + frontend dependencies
 # ---------------------------------------------------------------------------
-Write-Step "6/7 Frontend dependencies"
+Write-Step "7/8 Frontend dependencies"
 
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Write-Host "  Node.js/npm was not found on PATH." -ForegroundColor Red
@@ -214,9 +233,9 @@ Push-Location frontend
 Invoke-Step "frontend dependency install" { npm install }
 
 # ---------------------------------------------------------------------------
-# Step 7/7 - Frontend build
+# Step 8/8 - Frontend build
 # ---------------------------------------------------------------------------
-Write-Step "7/7 Building frontend for production"
+Write-Step "8/8 Building frontend for production"
 Invoke-Step "frontend build" { npm run build }
 Pop-Location
 

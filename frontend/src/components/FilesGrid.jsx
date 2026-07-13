@@ -1,10 +1,21 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AgGridReact } from 'ag-grid-react'
-import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community'
+import { AllCommunityModule, ModuleRegistry, colorSchemeDark, themeQuartz } from 'ag-grid-community'
 import { useAuth } from '../context/AuthContext'
 
 ModuleRegistry.registerModules([AllCommunityModule])
+
+// Dark UI everywhere (see index.css) - matches this app's own dark palette
+// rather than AG Grid's default dark colors, so the grid doesn't look like a
+// different app dropped into the page.
+const darkGridTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  backgroundColor: '#1b1a22', // --surface
+  foregroundColor: '#d8d6e0', // --text
+  borderColor: '#2c2a35', // --border
+  chromeBackgroundColor: '#171522', // --sidebar-bg
+  accentColor: '#8a72ff', // --accent
+})
 
 function lookupName(list, id) {
   if (id == null) return '-'
@@ -260,7 +271,7 @@ export default function FilesGrid({
   return (
     <div className="grid-wrapper">
       <AgGridReact
-        theme={themeQuartz}
+        theme={darkGridTheme}
         rowData={files}
         columnDefs={columnDefs}
         getRowId={(p) => String(p.data.FileID)}
