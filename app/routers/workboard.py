@@ -73,19 +73,22 @@ def get_workboard(current_user: User = Depends(require_admin), db: Session = Dep
             ).all()
         )
 
-    low_workload = []
+    active_workers = []
     if worker_ids:
         active_workers = db.scalars(
             select(User).where(User.UserID.in_(worker_ids), User.IsActive == True)  # noqa: E712
         ).all()
-        for worker in active_workers:
-            count = pending_counts.get(worker.UserID, 0)
-            if count < LOW_WORKLOAD_THRESHOLD:
-                low_workload.append(LowWorkloadWorkerOut(userId=worker.UserID, username=worker.Username, pendingCount=count))
-        low_workload.sort(key=lambda w: w.pendingCount)
+
+    low_workload = []
+    for worker in active_workers:
+        count = pending_counts.get(worker.UserID, 0)
+        if count < LOW_WORKLOAD_THRESHOLD:
+            low_workload.append(LowWorkloadWorkerOut(userId=worker.UserID, username=worker.Username, pendingCount=count))
+    low_workload.sort(key=lambda w: w.pendingCount)
 
     return AdminWorkboardOut(
         pendingApprovals=pending_approvals,
         lowWorkloadWorkers=low_workload,
         lowWorkloadThreshold=LOW_WORKLOAD_THRESHOLD,
+        checkedWorkerCount=len(active_workers),
     )

@@ -433,3 +433,6 @@ class AdminWorkboardOut(BaseModel):
     pendingApprovals: list[PendingApprovalOut]
     lowWorkloadWorkers: list[LowWorkloadWorkerOut]
     lowWorkloadThreshold: int
+    checkedWorkerCount: int  # how many workers have an active WorkerProcessPath at all - distinguishes
+    # "everyone's fine" (this is > 0, lowWorkloadWorkers is empty) from
+    # "nobody's configured yet" (this is 0) - both look like an empty list otherwise.

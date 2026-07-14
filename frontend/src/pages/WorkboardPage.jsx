@@ -105,7 +105,12 @@ export default function WorkboardPage() {
 
             <div className="reports-panel reports-panel-wide">
               <h3>Workers Running Low on Files (fewer than {board.lowWorkloadThreshold})</h3>
-              {board.lowWorkloadWorkers.length === 0 ? (
+              {board.checkedWorkerCount === 0 ? (
+                <p className="hint">
+                  No workers are configured yet - a worker only shows up here once they have an active Pending/Complete
+                  folder pair for at least one process type. Set that up on the User Management page first.
+                </p>
+              ) : board.lowWorkloadWorkers.length === 0 ? (
                 <p className="hint">Everyone has enough queued up.</p>
               ) : (
                 <table className="users-table">
