@@ -7,12 +7,20 @@ Every step is logged to FileTransferLog *before* it is attempted so a crash
 mid-transfer leaves a durable "Transferring" trail a reconciliation job can
 find on restart, instead of an ambiguous half-moved folder.
 
-Two callers drive this pipeline:
+Callers that drive this pipeline:
 - assign_file_process: admin assigns a (file, process type) to a worker -
   copies from the file's current location into that worker's Pending folder.
 - complete_process_assignment: a worker finishes their stage - copies from
-  their Pending folder into their own Complete folder, which is where the
-  next stage's assign_file_process call will read the file from next.
+  their Pending folder into their own Complete folder, and lands the stage on
+  "Submitted" (awaiting admin review), not "Complete" directly.
+- approve_process_assignment / reject_process_assignment: the admin review
+  gate. Approve flips Submitted -> Complete (no file move - it's already in
+  the worker's Complete folder), which is what actually unlocks the next
+  stage's assign_file_process call. Reject flips the submitted attempt to
+  "Repair" (distinct from the worker-initiated "Failed" below) and
+  immediately re-enters the SAME stage with a fresh assignment - same worker
+  by default, or a different eligible one - reusing assign_file_process's own
+  transfer/validation mechanics via the shared _assign_stage helper.
 """
 
 import os
@@ -24,6 +32,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.security import user_is_admin
+from app.services.notifications import create_notification, notify_admins
 
 from app.models import (
     FileProcessStatus,
@@ -157,6 +166,22 @@ def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_pa
 
 
 def assign_file_process(db: Session, file_id: int, process_type_id: int, target_user_id: int) -> TransferResult:
+    return _assign_stage(db, file_id, process_type_id, target_user_id)
+
+
+def _assign_stage(
+    db: Session, file_id: int, process_type_id: int, target_user_id: int, *, failure_reason: str | None = None
+) -> TransferResult:
+    """Shared by assign_file_process (a fresh stage) and reject_process_assignment's
+    redo (re-entering the SAME stage after a Repair verdict). `failure_reason`
+    is None for a plain assign (clears any stale reason, current behavior) or
+    the rejection reason for a reject-triggered redo, so FilesGrid's existing
+    ⚠ lastFailureReason tooltip shows the worker why their submission was
+    rejected for the entire lifetime of the redo. No gate here needs to be
+    skipped for the reject case: by the time this runs, reject_process_assignment
+    has already committed the stage to Repair with ActiveAssignmentID cleared,
+    so the "stage already has an active assignment"/"already Complete" checks
+    below pass exactly as they would for any ordinary fresh assign."""
     file_record = db.get(FileRecord, file_id)
     if file_record is None:
         raise ValueError("File not found")
@@ -247,7 +272,7 @@ def assign_file_process(db: Session, file_id: int, process_type_id: int, target_
     stage_status.AssignedToUserID = target_user_id
     stage_status.ActiveAssignmentID = assignment.AssignmentID
     stage_status.StartedTS = datetime.utcnow()
-    stage_status.LastFailureReason = None
+    stage_status.LastFailureReason = failure_reason
     db.commit()
     db.refresh(assignment)
 
@@ -284,6 +309,13 @@ def assign_file_process(db: Session, file_id: int, process_type_id: int, target_
     file_record.AssignedToUserID = target_user_id
     assignment.StatusID = pending_id
     stage_status.StatusID = pending_id
+    create_notification(
+        db,
+        target_user_id,
+        "FileAssigned",
+        f"You were assigned '{file_record.FileName}' for {process_type.ProcessTypeName}",
+        file_id=file_id,
+    )
     db.commit()
 
     return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path, warning=warning)
@@ -319,36 +351,143 @@ def complete_process_assignment(db: Session, assignment_id: int, current_user: U
         )
     )
 
-    complete_id = _status_id(db, "Complete")
+    submitted_id = _status_id(db, "Submitted")
 
     warning = None
     try:
         _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
     except SourceNotFoundError:
         # Same rationale as assign_file_process - someone likely already moved
-        # the file manually. Mark the stage Complete for tracking/reporting
+        # the file manually. Mark the stage Submitted for tracking/reporting
         # purposes, but flag that the physical file still needs a manual move.
         warning = (
-            f"Source folder not found at {source_path} - marked Complete, but the file was not "
+            f"Source folder not found at {source_path} - marked Submitted, but the file was not "
             f"copied. Please move it into {dest_path} manually."
         )
     except (FileLockedError, TransferVerificationError, OSError):
         # Retryable - the assignment stays active/in-progress, nothing reverted.
         raise
 
-    now = datetime.utcnow()
     file_record.CurrentPath = dest_path
-    file_record.StatusID = complete_id
-    assignment.StatusID = complete_id
-    assignment.CompletionTS = now
+    file_record.StatusID = submitted_id
+    assignment.StatusID = submitted_id
     assignment.IsActive = False
     if stage_status is not None:
-        stage_status.StatusID = complete_id
-        stage_status.CompletionTS = now
-        stage_status.ActiveAssignmentID = None
+        stage_status.StatusID = submitted_id
+        # CompletionTS/ActiveAssignmentID are intentionally left as-is here:
+        # CompletionTS stays None until an admin actually Approves (see
+        # approve_process_assignment below) - that's the one moment Reports/
+        # Calendar's "Completed" metrics should key off, not "worker clicked
+        # Complete" - and ActiveAssignmentID keeps pointing at this assignment
+        # so approve/reject can resolve "the thing awaiting my decision" with
+        # no extra query, which also means assign_file_process's own
+        # "stage already has an active assignment" gate already blocks anyone
+        # from re-assigning a Submitted stage without any change to that check.
+    process_type = db.get(ProcessType, assignment.ProcessTypeID)
+    notify_admins(
+        db,
+        "SubmittedForApproval",
+        f"{current_user.Username} submitted '{file_record.FileName}' ({process_type.ProcessTypeName}) for approval",
+        file_id=assignment.FileID,
+    )
     db.commit()
 
     return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path, warning=warning)
+
+
+def approve_process_assignment(db: Session, file_id: int, process_type_id: int) -> int:
+    """Admin approves a Submitted stage: flips it to Complete (CompletionTS set
+    now, at approval time - not at the earlier submission time - since that's
+    what Reports/Calendar's "Completed" metrics key off), unlocking the next
+    stage's normal assign flow exactly as a plain Complete used to. No
+    filesystem I/O - the file already sits in the worker's Complete folder
+    from when they submitted it. Admin-only; enforced by the router's
+    require_admin dependency, not here (same convention as assign_file_process/
+    reset_file/revoke_file - no legitimate non-admin caller exists)."""
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None:
+        raise ValueError("Unknown process type")
+
+    submitted_id = _status_id(db, "Submitted")
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    if stage_status is None or stage_status.StatusID != submitted_id:
+        raise ValueError(f"{process_type.ProcessTypeName} is not awaiting approval")
+
+    assignment = db.get(TaskAssignment, stage_status.ActiveAssignmentID) if stage_status.ActiveAssignmentID else None
+    if assignment is None:
+        raise ValueError("No submitted assignment found to approve")
+
+    complete_id = _status_id(db, "Complete")
+    now = datetime.utcnow()
+    assignment.StatusID = complete_id
+    assignment.CompletionTS = now
+
+    stage_status.StatusID = complete_id
+    stage_status.CompletionTS = now
+    stage_status.ActiveAssignmentID = None
+    stage_status.LastFailureReason = None  # clear any stale Repair reason from an earlier reject cycle - resolved now
+
+    file_record = db.get(FileRecord, file_id)
+    file_record.StatusID = complete_id
+    db.commit()
+    return assignment.AssignmentID
+
+
+def reject_process_assignment(
+    db: Session, file_id: int, process_type_id: int, reason: str, reassign_to_user_id: int | None
+) -> TransferResult:
+    """Admin-initiated rejection of a Submitted stage for quality reasons -
+    distinct from the worker-initiated mark_assignment_failed below (that one
+    is "I can't finish this", untouched by this feature). Marks the submitted
+    attempt Repair with the given reason (the permanent historical record,
+    already visible for free in FileHistoryModal/process-history/report
+    exports since those resolve status names/failure reasons generically),
+    then immediately re-enters the SAME stage - not the next one - with a
+    fresh assignment: to the same worker by default, or a different eligible
+    one. Admin-only; enforced by the router's require_admin dependency."""
+    file_record = db.get(FileRecord, file_id)
+    if file_record is None:
+        raise ValueError("File not found")
+
+    process_type = db.get(ProcessType, process_type_id)
+    if process_type is None:
+        raise ValueError("Unknown process type")
+
+    submitted_id = _status_id(db, "Submitted")
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    if stage_status is None or stage_status.StatusID != submitted_id:
+        raise ValueError(f"{process_type.ProcessTypeName} is not awaiting approval")
+
+    old_assignment = db.get(TaskAssignment, stage_status.ActiveAssignmentID) if stage_status.ActiveAssignmentID else None
+    if old_assignment is None:
+        raise ValueError("No submitted assignment found to reject")
+
+    repair_id = _status_id(db, "Repair")
+    old_assignment.StatusID = repair_id
+    old_assignment.FailureReason = reason
+    old_assignment.CompletionTS = datetime.utcnow()
+    # IsActive is already False since submission (complete_process_assignment
+    # set it) - nothing here reactivates it.
+
+    stage_status.StatusID = repair_id
+    stage_status.LastFailureReason = reason
+    stage_status.ActiveAssignmentID = None
+    # Durability checkpoint: the Repair verdict survives even if the
+    # reassignment below fails outright (e.g. a bad target user id) - same
+    # "commit before the next step" rationale _assign_stage itself uses for
+    # its own durability checkpoint before physical I/O.
+    db.commit()
+
+    target_user_id = reassign_to_user_id if reassign_to_user_id is not None else old_assignment.AssignedToUserID
+    return _assign_stage(db, file_id, process_type_id, target_user_id, failure_reason=reason)
 
 
 def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, current_user: User) -> TransferResult:

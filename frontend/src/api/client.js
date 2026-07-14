@@ -174,6 +174,17 @@ export function reopenFile(fileId, processTypeId) {
   return request(`/files/${fileId}/reopen?process_type_id=${processTypeId}`, { method: 'POST' })
 }
 
+export function approveFile(fileId, processTypeId) {
+  return request(`/admin/files/${fileId}/approve?process_type_id=${processTypeId}`, { method: 'POST' })
+}
+
+export function rejectFile(fileId, processTypeId, reason, reassignToUserId) {
+  return request(`/admin/files/${fileId}/reject?process_type_id=${processTypeId}`, {
+    method: 'POST',
+    body: { reason, reassign_to_user_id: reassignToUserId },
+  })
+}
+
 export function setFileActive(fileId, isActive) {
   return request(`/admin/files/${fileId}`, { method: 'PATCH', body: { is_active: isActive } })
 }
@@ -332,6 +343,29 @@ export function getCompletionsReport(params = {}) {
 
 export function getTaxonomyProgressReport() {
   return request('/reports/taxonomy-progress')
+}
+
+export function getRepairsReport(params = {}) {
+  const qs = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  ).toString()
+  return request(`/reports/repairs${qs ? `?${qs}` : ''}`)
+}
+
+export function getNotifications(limit = 30) {
+  return request(`/notifications?limit=${limit}`)
+}
+
+export function markNotificationRead(id) {
+  return request(`/notifications/${id}/read`, { method: 'POST' })
+}
+
+export function markAllNotificationsRead() {
+  return request('/notifications/mark-all-read', { method: 'POST' })
+}
+
+export function getAdminWorkboard() {
+  return request('/admin/workboard')
 }
 
 async function downloadFile(path, filenameFallback) {

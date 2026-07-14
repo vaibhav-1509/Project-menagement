@@ -20,10 +20,12 @@ from app.routers import (  # noqa: E402
     filesystem,
     imports,
     lookups,
+    notifications,
     process_types,
     reports,
     taxonomy,
     users,
+    workboard,
 )
 
 APP_DIR = Path(__file__).resolve().parent
@@ -84,6 +86,8 @@ app.include_router(process_types.router)
 app.include_router(audit_trail.router)
 app.include_router(calendar.router)
 app.include_router(reports.router)
+app.include_router(notifications.router)
+app.include_router(workboard.router)
 
 
 @app.get("/api/health")

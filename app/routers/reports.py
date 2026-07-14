@@ -6,7 +6,17 @@ from sqlalchemy import Date, cast, false, func, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Category, FileProcessStatus, FileRecord, FileStatus, Phase, ProcessType, SubCategory, User
+from app.models import (
+    Category,
+    FileProcessStatus,
+    FileRecord,
+    FileStatus,
+    Phase,
+    ProcessType,
+    SubCategory,
+    TaskAssignment,
+    User,
+)
 from app.schemas import (
     BucketCountOut,
     MonthSeriesOut,
@@ -36,6 +46,10 @@ def _final_process_type_id(db: Session) -> int | None:
 
 def _complete_status_id(db: Session) -> int:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Complete"))
+
+
+def _repair_status_id(db: Session) -> int:
+    return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Repair"))
 
 
 def _scope_user_id(current_user: User, requested_user_id: int | None) -> int | None:
@@ -75,25 +89,37 @@ def _completions_by_day(
     return dict(db.execute(query).all())
 
 
-@router.get("/completions", response_model=ReportsCompletionsOut)
-def get_completions(
-    reference_date: str | None = None,
-    compare_weeks: int = 4,
-    compare_months: int = 6,
+def _repairs_by_day(
+    db: Session,
+    repair_id: int | None,
+    start: date_cls,
+    end_exclusive: date_cls,
     user_id: int | None = None,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
-    complete_id = _complete_status_id(db)
-    scoped_user_id = _scope_user_id(current_user, user_id)
+) -> dict:
+    """Repair must be sourced from TaskAssignment, not FileProcessStatus - a
+    reject never touches FileProcessStatus.CompletionTS (the stage moves
+    Submitted -> Repair -> a fresh Pending, none of which sets it). Mirrors
+    why calendar.py's failed_q is TaskAssignment-based for the same reason:
+    Fail/Repair are attempt-level events, not stage-level "current state"
+    facts the way Complete is."""
+    if repair_id is None:
+        return {}
+    query = select(cast(TaskAssignment.CompletionTS, Date), func.count()).where(
+        TaskAssignment.StatusID == repair_id,
+        TaskAssignment.CompletionTS >= start,
+        TaskAssignment.CompletionTS < end_exclusive,
+    )
+    if user_id is not None:
+        query = query.where(TaskAssignment.AssignedToUserID == user_id)
+    query = query.group_by(cast(TaskAssignment.CompletionTS, Date))
+    return dict(db.execute(query).all())
 
-    # One grouped query wide enough to cover the year view plus both
-    # comparison windows, instead of several overlapping range queries.
-    window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
-    window_start = ref - timedelta(days=window_days)
-    window_end_exclusive = ref + timedelta(days=1)
-    day_counts = _completions_by_day(db, complete_id, window_start, window_end_exclusive, scoped_user_id)
+
+def _build_time_series(
+    ref: date_cls, day_counts: dict, compare_weeks: int, compare_months: int
+) -> ReportsCompletionsOut:
+    """Shared week/month/year/comparison bucketing - identical shape for both
+    /completions and /repairs, only the underlying day_counts source differs."""
 
     def count_on(d: date_cls) -> int:
         return day_counts.get(d, 0)
@@ -154,6 +180,53 @@ def get_completions(
         weekComparison=week_comparison,
         monthComparison=month_comparison,
     )
+
+
+@router.get("/completions", response_model=ReportsCompletionsOut)
+def get_completions(
+    reference_date: str | None = None,
+    compare_weeks: int = 4,
+    compare_months: int = 6,
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    complete_id = _complete_status_id(db)
+    scoped_user_id = _scope_user_id(current_user, user_id)
+
+    # One grouped query wide enough to cover the year view plus both
+    # comparison windows, instead of several overlapping range queries.
+    window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
+    window_start = ref - timedelta(days=window_days)
+    window_end_exclusive = ref + timedelta(days=1)
+    day_counts = _completions_by_day(db, complete_id, window_start, window_end_exclusive, scoped_user_id)
+
+    return _build_time_series(ref, day_counts, compare_weeks, compare_months)
+
+
+@router.get("/repairs", response_model=ReportsCompletionsOut)
+def get_repairs(
+    reference_date: str | None = None,
+    compare_weeks: int = 4,
+    compare_months: int = 6,
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sibling of /completions tracking admin-rejected ('Repair') attempts
+    instead of Complete ones - same shape, same scoping rule, so the
+    frontend can render it with the exact same chart components."""
+    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    repair_id = _repair_status_id(db)
+    scoped_user_id = _scope_user_id(current_user, user_id)
+
+    window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
+    window_start = ref - timedelta(days=window_days)
+    window_end_exclusive = ref + timedelta(days=1)
+    day_counts = _repairs_by_day(db, repair_id, window_start, window_end_exclusive, scoped_user_id)
+
+    return _build_time_series(ref, day_counts, compare_weeks, compare_months)
 
 
 def _progress_items(id_to_name: dict, id_to_total: dict, id_to_completed: dict) -> list[TaxonomyProgressItemOut]:

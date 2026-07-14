@@ -11,6 +11,7 @@ export default function ReportsPage() {
   const { isAdmin } = useAuth()
   const [referenceDate, setReferenceDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [report, setReport] = useState(null)
+  const [repairs, setRepairs] = useState(null)
   const [progress, setProgress] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -43,12 +44,14 @@ export default function ReportsPage() {
         // themselves - Taxonomy Progress stays the org-wide view regardless.
         const completionsParams = { reference_date: referenceDate }
         if (isAdmin && selectedUserId) completionsParams.user_id = selectedUserId
-        const [reportData, progressData] = await Promise.all([
+        const [reportData, repairsData, progressData] = await Promise.all([
           api.getCompletionsReport(completionsParams),
+          api.getRepairsReport(completionsParams),
           isAdmin ? api.getTaxonomyProgressReport() : Promise.resolve(null),
         ])
         if (cancelled) return
         setReport(reportData)
+        setRepairs(repairsData)
         setProgress(progressData)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load reports')
@@ -162,6 +165,12 @@ export default function ReportsPage() {
                 <div className="stat-value">{report.totals.thisYear}</div>
                 <div className="stat-label">This Year</div>
               </div>
+              {repairs && (
+                <div className="reports-stat-card">
+                  <div className="stat-value">{repairs.totals.thisWeek}</div>
+                  <div className="stat-label">Repairs This Week</div>
+                </div>
+              )}
             </div>
 
             <div className="reports-grid">
@@ -185,6 +194,12 @@ export default function ReportsPage() {
                 <h3>This Year</h3>
                 <ComparisonPieChart data={report.year.months} />
               </div>
+              {repairs && (
+                <div className="reports-panel">
+                  <h3>Repairs This Week</h3>
+                  <WeekBarChart data={repairs.week.days} />
+                </div>
+              )}
 
               {progress && (
                 <div className="reports-panel reports-panel-wide">

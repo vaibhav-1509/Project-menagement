@@ -119,7 +119,7 @@ export default function CalendarPage() {
               <div key={`blank-${i}`} className="calendar-day calendar-day-blank" />
             ))}
             {days.map((day) => {
-              const total = day.assignedCount + day.completedCount + day.failedCount
+              const total = day.assignedCount + day.completedCount + day.failedCount + day.repairedCount
               const dayNum = Number(day.date.slice(-2))
               const isToday =
                 year === today.getFullYear() && month === today.getMonth() + 1 && dayNum === today.getDate()
@@ -137,6 +137,9 @@ export default function CalendarPage() {
                         <span className="status-pill active">{day.completedCount} completed</span>
                       )}
                       {day.failedCount > 0 && <span className="status-pill inactive">{day.failedCount} failed</span>}
+                      {day.repairedCount > 0 && (
+                        <span className="status-pill warning">{day.repairedCount} repair</span>
+                      )}
                     </div>
                   )}
                 </div>

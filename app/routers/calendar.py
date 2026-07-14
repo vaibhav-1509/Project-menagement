@@ -41,6 +41,7 @@ def get_activity(
 
     complete_id = _status_id(db, "Complete")
     failed_id = _status_id(db, "Failed")
+    repair_id = _status_id(db, "Repair")
     transferring_id = _status_id(db, "Transferring")
 
     # Excludes only assignment rows whose copy never actually finished (still
@@ -78,15 +79,26 @@ def get_activity(
         )
         .group_by(cast(TaskAssignment.CompletionTS, Date))
     )
+    repaired_q = (
+        select(cast(TaskAssignment.CompletionTS, Date), func.count())
+        .where(
+            TaskAssignment.CompletionTS >= first_day,
+            TaskAssignment.CompletionTS < next_month_start,
+            TaskAssignment.StatusID == repair_id,
+        )
+        .group_by(cast(TaskAssignment.CompletionTS, Date))
+    )
 
     if effective_user_id is not None:
         assigned_q = assigned_q.where(TaskAssignment.AssignedToUserID == effective_user_id)
         completed_q = completed_q.where(TaskAssignment.AssignedToUserID == effective_user_id)
         failed_q = failed_q.where(TaskAssignment.AssignedToUserID == effective_user_id)
+        repaired_q = repaired_q.where(TaskAssignment.AssignedToUserID == effective_user_id)
 
     assigned_counts = dict(db.execute(assigned_q).all())
     completed_counts = dict(db.execute(completed_q).all())
     failed_counts = dict(db.execute(failed_q).all())
+    repaired_counts = dict(db.execute(repaired_q).all())
 
     days = []
     for day_num in range(1, days_in_month + 1):
@@ -97,6 +109,7 @@ def get_activity(
                 assignedCount=assigned_counts.get(d, 0),
                 completedCount=completed_counts.get(d, 0),
                 failedCount=failed_counts.get(d, 0),
+                repairedCount=repaired_counts.get(d, 0),
             )
         )
     return CalendarMonthOut(year=year, month=month, days=days)
@@ -118,6 +131,7 @@ def get_day(
 
     complete_id = _status_id(db, "Complete")
     failed_id = _status_id(db, "Failed")
+    repair_id = _status_id(db, "Repair")
     transferring_id = _status_id(db, "Transferring")
 
     base_query = (
@@ -156,7 +170,15 @@ def get_day(
             )
         )
     for assignment, username, file_name, process_type_name in completion_rows:
-        event_name = "Completed" if assignment.StatusID == complete_id else "Failed" if assignment.StatusID == failed_id else "Updated"
+        event_name = (
+            "Completed"
+            if assignment.StatusID == complete_id
+            else "Failed"
+            if assignment.StatusID == failed_id
+            else "Repair"
+            if assignment.StatusID == repair_id
+            else "Updated"
+        )
         events.append(
             CalendarEventOut(
                 fileId=assignment.FileID,

@@ -246,6 +246,22 @@ CREATE TABLE FileTransferLog (
 );
 GO
 
+-- Bell-icon feed - see app/models.py's Notification and
+-- app/services/notifications.py for the two emit points.
+CREATE TABLE Notifications (
+    NotificationID   INT IDENTITY(1,1) PRIMARY KEY,
+    RecipientUserID  INT NOT NULL FOREIGN KEY REFERENCES Users(UserID),
+    NotificationType NVARCHAR(50) NOT NULL,
+    FileID           INT NULL FOREIGN KEY REFERENCES Files(FileID),
+    Message          NVARCHAR(500) NOT NULL,
+    IsRead           BIT NOT NULL DEFAULT 0,
+    CreatedAt        DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+CREATE INDEX IX_Notifications_Recipient_Read ON Notifications(RecipientUserID, IsRead);
+CREATE INDEX IX_Notifications_Recipient_Created ON Notifications(RecipientUserID, CreatedAt);
+GO
+
 /* -------------------------------------------------------------------------
    Indexes for the query patterns the dashboard actually uses
    ------------------------------------------------------------------------- */
@@ -271,7 +287,7 @@ GO
 -- not phases. Phases are a free-form classification the admin defines from scratch
 -- via the Categories page (see app/routers/taxonomy.py).
 INSERT INTO Roles (RoleName) VALUES ('Admin'), ('Polish Artist'), ('GLB Artist'), ('Render Artist');
-INSERT INTO FileStatuses (StatusName) VALUES ('Pending'), ('InProgress'), ('Transferring'), ('Complete'), ('Locked'), ('Error'), ('Failed'), ('Revoked');
+INSERT INTO FileStatuses (StatusName) VALUES ('Pending'), ('InProgress'), ('Transferring'), ('Complete'), ('Locked'), ('Error'), ('Failed'), ('Revoked'), ('Submitted'), ('Repair');
 INSERT INTO ProcessTypes (ProcessTypeName, SortOrder) VALUES ('Polish', 10), ('GLB', 20), ('Render', 30);
 GO
 

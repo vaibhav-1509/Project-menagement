@@ -194,6 +194,7 @@ class CalendarDayCountOut(BaseModel):
     assignedCount: int
     completedCount: int
     failedCount: int
+    repairedCount: int
 
 
 class CalendarMonthOut(BaseModel):
@@ -209,7 +210,7 @@ class CalendarEventOut(BaseModel):
     processTypeName: str
     assignedToUserId: int
     assignedToUsername: str
-    event: str  # "Assigned" | "Completed" | "Failed"
+    event: str  # "Assigned" | "Completed" | "Failed" | "Repair" | "Updated"
     eventTs: datetime
     failureReason: str | None
 
@@ -356,6 +357,11 @@ class MarkFailedRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=1000)
 
 
+class RejectAssignmentRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+    reassign_to_user_id: int | None = None  # None => reassign to the same worker who submitted
+
+
 class ProcessAttemptOut(BaseModel):
     assignmentId: int
     processTypeId: int
@@ -391,3 +397,39 @@ class FileProcessHistoryOut(BaseModel):
 
 class SetActiveRequest(BaseModel):
     is_active: bool
+
+
+class NotificationOut(BaseModel):
+    id: int
+    type: str
+    message: str
+    fileId: int | None
+    isRead: bool
+    createdAt: datetime
+
+
+class NotificationsPageOut(BaseModel):
+    items: list[NotificationOut]
+    unreadCount: int
+
+
+class PendingApprovalOut(BaseModel):
+    fileId: int
+    fileName: str
+    processTypeId: int
+    processTypeName: str
+    submittedByUserId: int
+    submittedByUsername: str
+    submittedAt: datetime | None
+
+
+class LowWorkloadWorkerOut(BaseModel):
+    userId: int
+    username: str
+    pendingCount: int
+
+
+class AdminWorkboardOut(BaseModel):
+    pendingApprovals: list[PendingApprovalOut]
+    lowWorkloadWorkers: list[LowWorkloadWorkerOut]
+    lowWorkloadThreshold: int

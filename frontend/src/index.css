@@ -136,11 +136,109 @@ textarea {
   padding: 16px 0;
 }
 
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 16px;
+  gap: 8px;
+}
+
 .sidebar-brand {
   font-weight: 600;
   color: var(--sidebar-text-active);
-  padding: 0 20px 16px;
   font-size: 14px;
+}
+
+.notification-bell {
+  position: relative;
+}
+
+.notification-bell-toggle {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  font-size: 18px;
+  line-height: 1;
+  position: relative;
+  color: var(--sidebar-text-active);
+}
+
+.notification-bell-toggle:hover {
+  background: transparent;
+  opacity: 0.8;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+  font-weight: 700;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 50;
+  color: var(--text);
+}
+
+.notification-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notification-item:hover {
+  background: var(--border);
+}
+
+.notification-item-unread {
+  background: rgba(138, 114, 255, 0.08);
+  font-weight: 600;
+}
+
+.notification-reminders {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notification-reminders strong {
+  font-size: 12px;
+  color: var(--warning);
 }
 
 .sidebar nav {
@@ -449,6 +547,11 @@ textarea {
 .status-pill.inactive {
   background: var(--danger-bg);
   color: var(--danger);
+}
+
+.status-pill.warning {
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .checkbox-row {

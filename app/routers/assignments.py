@@ -6,14 +6,22 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import AuditTrail, FileProcessStatus, FileRecord, FileStatus, ProcessType, TaskAssignment, User
-from app.schemas import FileProcessHistoryOut, FileProcessStageOut, MarkFailedRequest, ProcessAttemptOut
+from app.schemas import (
+    FileProcessHistoryOut,
+    FileProcessStageOut,
+    MarkFailedRequest,
+    ProcessAttemptOut,
+    RejectAssignmentRequest,
+)
 from app.security import get_current_user, require_admin, user_is_admin
 from app.services.file_transfer import (
     FileLockedError,
     TransferVerificationError,
+    approve_process_assignment,
     assert_no_later_stage_started,
     complete_process_assignment,
     mark_assignment_failed,
+    reject_process_assignment,
     reopen_process_assignment,
 )
 
@@ -242,6 +250,88 @@ def revoke_file(
     )
     db.commit()
     return {"status": "revoked"}
+
+
+@router.post("/api/admin/files/{file_id}/approve")
+def approve_file(
+    file_id: int,
+    process_type_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin approves a stage a worker has Submitted for review: flips it to
+    Complete, unlocking the next stage's normal Assign flow - the other half
+    of the quality gate that mark_assignment_failed/reject_file don't cover."""
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    old_assignment_id = stage_status.ActiveAssignmentID if stage_status else None
+
+    try:
+        assignment_id = approve_process_assignment(db, file_id, process_type_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    db.add(
+        AuditTrail(
+            FileID=file_id,
+            AssignmentID=assignment_id,
+            Action="Approved",
+            PerformedByUserID=current_user.UserID,
+            OldValue=json.dumps({"status": "Submitted", "assignment_id": old_assignment_id}),
+            NewValue=json.dumps({"status": "Complete"}),
+        )
+    )
+    db.commit()
+    return {"status": "approved"}
+
+
+@router.post("/api/admin/files/{file_id}/reject")
+def reject_file(
+    file_id: int,
+    process_type_id: int,
+    payload: RejectAssignmentRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin rejects a Submitted stage for quality reasons - distinct from the
+    worker-initiated Fail flow above. Marks the old attempt Repair with the
+    given reason, then immediately re-enters the SAME stage with a fresh
+    assignment (same worker by default, or a different eligible one)."""
+    stage_status = db.scalar(
+        select(FileProcessStatus).where(
+            FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == process_type_id
+        )
+    )
+    old_assignment_id = stage_status.ActiveAssignmentID if stage_status else None
+
+    try:
+        result = reject_process_assignment(db, file_id, process_type_id, payload.reason, payload.reassign_to_user_id)
+    except FileLockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except TransferVerificationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
+
+    db.add(
+        AuditTrail(
+            FileID=file_id,
+            AssignmentID=old_assignment_id,
+            Action="Rejected",
+            PerformedByUserID=current_user.UserID,
+            OldValue=json.dumps({"status": "Submitted", "assignment_id": old_assignment_id}),
+            NewValue=json.dumps(
+                {"status": "Repair", "reason": payload.reason, "new_assignment_id": result.assignment_id}
+            ),
+        )
+    )
+    db.commit()
+    return {"assignment_id": result.assignment_id, "dest_path": result.dest_path, "warning": result.warning, "status": "rejected"}
 
 
 @router.get("/api/files/{file_id}/process-history", response_model=FileProcessHistoryOut)

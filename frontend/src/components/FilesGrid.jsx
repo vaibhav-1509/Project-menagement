@@ -25,7 +25,8 @@ function lookupName(list, id) {
 
 function statusClass(statusName) {
   if (statusName === 'Complete') return 'active'
-  if (statusName === 'Failed') return 'inactive'
+  if (statusName === 'Failed' || statusName === 'Repair') return 'inactive'
+  if (statusName === 'Submitted') return 'warning'
   return ''
 }
 
@@ -76,6 +77,8 @@ export default function FilesGrid({
   onReopen,
   onComplete,
   onFail,
+  onApprove,
+  onReject,
   onHistory,
   onSetActive,
   onDelete,
@@ -188,6 +191,7 @@ export default function FilesGrid({
           const row = p.data
           const assignable = findAssignableStage(row)
           const resettableStage = findResettableStage(row)
+          const isSubmitted = resettableStage && resettableStage.statusName === 'Submitted'
           const isMine = row.myActiveAssignmentId != null
           const hasAnyActiveAssignment = (row.processStages || []).some((s) => s.activeAssignmentId)
           return (
@@ -195,12 +199,29 @@ export default function FilesGrid({
               {!readOnly && isAdmin && assignable && (
                 <button onClick={() => onAssign(row, assignable)}>Assign {assignable.processTypeName}</button>
               )}
-              {!readOnly && isAdmin && resettableStage && (
+              {!readOnly && isAdmin && isSubmitted && (
+                <button
+                  onClick={() => onApprove(row, resettableStage)}
+                  title="Unlocks the next stage - the file already sits in this worker's Complete folder"
+                >
+                  Approve {resettableStage.processTypeName}
+                </button>
+              )}
+              {!readOnly && isAdmin && isSubmitted && (
+                <button
+                  onClick={() => onReject(row, resettableStage)}
+                  className="secondary"
+                  title="Send back for rework, with a reason - to the same worker or a different eligible one"
+                >
+                  Reject {resettableStage.processTypeName}
+                </button>
+              )}
+              {!readOnly && isAdmin && resettableStage && !isSubmitted && (
                 <button onClick={() => onReset(row, resettableStage)} className="secondary">
                   {resettableStage.statusName === 'Complete' ? 'Undo Complete' : 'Reset'} {resettableStage.processTypeName}
                 </button>
               )}
-              {!readOnly && isAdmin && resettableStage && (
+              {!readOnly && isAdmin && resettableStage && !isSubmitted && (
                 <button
                   onClick={() => onRevoke(row, resettableStage)}
                   className="secondary"
@@ -262,6 +283,8 @@ export default function FilesGrid({
       onReopen,
       onComplete,
       onFail,
+      onApprove,
+      onReject,
       onHistory,
       onSetActive,
       onDelete,

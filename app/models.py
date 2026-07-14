@@ -211,6 +211,23 @@ class AuditTrail(Base):
     Timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class Notification(Base):
+    """Bell-icon feed - lightweight, dismissible events. Separate from
+    AuditTrail (the full admin override record): a notification is "something
+    happened that you should look at," not a permanent audit fact. See
+    app/services/notifications.py for the two emit points."""
+
+    __tablename__ = "Notifications"
+
+    NotificationID: Mapped[int] = mapped_column(Integer, primary_key=True)
+    RecipientUserID: Mapped[int] = mapped_column(ForeignKey("Users.UserID"))
+    NotificationType: Mapped[str] = mapped_column(String(50))
+    FileID: Mapped[int | None] = mapped_column(ForeignKey("Files.FileID"), nullable=True)
+    Message: Mapped[str] = mapped_column(String(500))
+    IsRead: Mapped[bool] = mapped_column(Boolean, default=False)
+    CreatedAt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class FileTransferLog(Base):
     __tablename__ = "FileTransferLog"
 

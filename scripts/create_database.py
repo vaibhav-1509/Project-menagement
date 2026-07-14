@@ -202,6 +202,27 @@ def _migrate_add_revoked_status(cursor) -> None:
         cursor.execute("INSERT INTO FileStatuses (StatusName) VALUES ('Revoked')")
 
 
+def _migrate_add_submitted_status(cursor) -> None:
+    """'Submitted' means a worker finished a stage and physically moved the
+    file into their own Complete folder, but an admin hasn't approved it yet -
+    the next stage stays locked until Approve flips this to Complete."""
+    cursor.execute("SELECT 1 FROM FileStatuses WHERE StatusName = 'Submitted'")
+    if cursor.fetchone() is None:
+        print("Adding 'Submitted' file status...")
+        cursor.execute("INSERT INTO FileStatuses (StatusName) VALUES ('Submitted')")
+
+
+def _migrate_add_repair_status(cursor) -> None:
+    """'Repair' marks an admin-rejected attempt (quality issue found on
+    review) - distinct from 'Failed' (worker-self-reported, couldn't finish).
+    Only ever set by reject_process_assignment on the old attempt being
+    replaced."""
+    cursor.execute("SELECT 1 FROM FileStatuses WHERE StatusName = 'Repair'")
+    if cursor.fetchone() is None:
+        print("Adding 'Repair' file status...")
+        cursor.execute("INSERT INTO FileStatuses (StatusName) VALUES ('Repair')")
+
+
 def _migrate_create_process_types(cursor) -> None:
     print("Creating ProcessTypes (Polish/GLB/Render pipeline stages)...")
     cursor.execute(
@@ -488,6 +509,29 @@ def _migrate_add_taskassignments_date_indexes(cursor) -> None:
     print("TaskAssignments date indexes added.")
 
 
+def _migrate_create_notifications(cursor) -> None:
+    """Bell-icon feed - see app/models.py's Notification and
+    app/services/notifications.py for the two emit points (assigned-to-me,
+    submitted-for-review)."""
+    print("Creating Notifications (bell icon feed)...")
+    cursor.execute(
+        """
+        CREATE TABLE Notifications (
+            NotificationID   INT IDENTITY(1,1) PRIMARY KEY,
+            RecipientUserID  INT NOT NULL FOREIGN KEY REFERENCES Users(UserID),
+            NotificationType NVARCHAR(50) NOT NULL,
+            FileID           INT NULL FOREIGN KEY REFERENCES Files(FileID),
+            Message          NVARCHAR(500) NOT NULL,
+            IsRead           BIT NOT NULL DEFAULT 0,
+            CreatedAt        DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+        )
+        """
+    )
+    cursor.execute("CREATE INDEX IX_Notifications_Recipient_Read ON Notifications(RecipientUserID, IsRead)")
+    cursor.execute("CREATE INDEX IX_Notifications_Recipient_Created ON Notifications(RecipientUserID, CreatedAt)")
+    print("Notifications created.")
+
+
 def _migrate_add_fileprocessstatus_completion_index(cursor) -> None:
     print("Adding FileProcessStatus completion index for Reports...")
     cursor.execute(
@@ -512,6 +556,8 @@ def _run_migrations(cursor) -> None:
         _migrate_add_is_active(cursor)
     _migrate_add_failed_status(cursor)
     _migrate_add_revoked_status(cursor)
+    _migrate_add_submitted_status(cursor)
+    _migrate_add_repair_status(cursor)
     if not _table_exists(cursor, "ProcessTypes"):
         _migrate_create_process_types(cursor)
     if not _table_exists(cursor, "WorkerProcessPaths"):
@@ -532,6 +578,8 @@ def _run_migrations(cursor) -> None:
         _migrate_add_taskassignments_date_indexes(cursor)
     if not _index_exists(cursor, "FileProcessStatus", "IX_FileProcessStatus_ProcessType_Status_Completion"):
         _migrate_add_fileprocessstatus_completion_index(cursor)
+    if not _table_exists(cursor, "Notifications"):
+        _migrate_create_notifications(cursor)
     _migrate_fix_sp_create_first_admin(cursor)
 
 

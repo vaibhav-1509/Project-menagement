@@ -3,7 +3,14 @@ import Modal from './Modal'
 import * as api from '../api/client'
 
 function StatusPill({ statusName, failureReason }) {
-  const cls = statusName === 'Complete' ? 'active' : statusName === 'Failed' || statusName === 'Revoked' ? 'inactive' : ''
+  const cls =
+    statusName === 'Complete'
+      ? 'active'
+      : statusName === 'Failed' || statusName === 'Revoked' || statusName === 'Repair'
+        ? 'inactive'
+        : statusName === 'Submitted'
+          ? 'warning'
+          : ''
   return (
     <span className={`status-pill ${cls}`} title={failureReason || ''}>
       {statusName}

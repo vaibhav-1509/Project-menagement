@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ChangePasswordModal from './ChangePasswordModal'
+import NotificationBell from './NotificationBell'
 
 export default function Sidebar({ onImportClick }) {
   const { username, myRoleNames, isAdmin, logout } = useAuth()
@@ -18,7 +19,10 @@ export default function Sidebar({ onImportClick }) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">Project Management Tool</div>
+      <div className="sidebar-brand-row">
+        <div className="sidebar-brand">Project Management Tool</div>
+        <NotificationBell />
+      </div>
       <nav>
         <button
           className={`nav-item nav-item-button ${location.pathname === '/dashboard' ? 'active' : ''}`}
@@ -49,6 +53,14 @@ export default function Sidebar({ onImportClick }) {
         >
           Calendar
         </button>
+        {isAdmin && (
+          <button
+            className={`nav-item nav-item-button ${location.pathname === '/workboard' ? 'active' : ''}`}
+            onClick={() => navigate('/workboard')}
+          >
+            Workboard
+          </button>
+        )}
         {isAdmin && (
           <button
             className={`nav-item nav-item-button ${location.pathname === '/audit-trail' ? 'active' : ''}`}

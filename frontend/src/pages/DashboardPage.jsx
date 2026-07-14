@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar'
 import FilesGrid from '../components/FilesGrid'
 import AssignModal from '../components/AssignModal'
 import FailAssignmentModal from '../components/FailAssignmentModal'
+import RejectModal from '../components/RejectModal'
 import FileHistoryModal from '../components/FileHistoryModal'
 import ImportModal from '../components/ImportModal'
 import MoveFilesModal from '../components/MoveFilesModal'
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [warning, setWarning] = useState('')
   const [assignTarget, setAssignTarget] = useState(null) // { file, stage }
   const [failTarget, setFailTarget] = useState(null) // file row
+  const [rejectTarget, setRejectTarget] = useState(null) // { file, stage }
   const [historyFileId, setHistoryFileId] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState([])
@@ -122,6 +124,30 @@ export default function DashboardPage() {
     await loadFiles(filters)
   }
 
+  async function handleApprove(row, stage) {
+    if (!window.confirm(`Approve "${row.FileName}"'s ${stage.processTypeName} stage? This unlocks the next stage.`))
+      return
+    setWarning('')
+    try {
+      await api.approveFile(row.FileID, stage.processTypeId)
+      await loadFiles(filters)
+    } catch (err) {
+      setError(err.message || 'Failed to approve stage')
+    }
+  }
+
+  async function handleReject(reason, reassignToUserId) {
+    setWarning('')
+    const result = await api.rejectFile(
+      rejectTarget.file.FileID,
+      rejectTarget.stage.processTypeId,
+      reason,
+      reassignToUserId
+    )
+    if (result?.warning) setWarning(result.warning)
+    await loadFiles(filters)
+  }
+
   async function handleSetActive(row, isActive) {
     try {
       await api.setFileActive(row.FileID, isActive)
@@ -166,6 +192,8 @@ export default function DashboardPage() {
             onReopen={handleReopen}
             onComplete={handleComplete}
             onFail={(row) => setFailTarget(row)}
+            onApprove={handleApprove}
+            onReject={(row, stage) => setRejectTarget({ file: row, stage })}
             onHistory={(row) => setHistoryFileId(row.FileID)}
             onSetActive={handleSetActive}
             onDelete={handleDelete}
@@ -186,6 +214,16 @@ export default function DashboardPage() {
 
       {failTarget && (
         <FailAssignmentModal file={failTarget} onFail={handleFail} onClose={() => setFailTarget(null)} />
+      )}
+
+      {rejectTarget && (
+        <RejectModal
+          file={rejectTarget.file}
+          stage={rejectTarget.stage}
+          users={users}
+          onReject={handleReject}
+          onClose={() => setRejectTarget(null)}
+        />
       )}
 
       {historyFileId && <FileHistoryModal fileId={historyFileId} onClose={() => setHistoryFileId(null)} />}

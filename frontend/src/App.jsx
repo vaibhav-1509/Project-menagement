@@ -9,6 +9,7 @@ import ProcessTypesPage from './pages/ProcessTypesPage'
 import AuditTrailPage from './pages/AuditTrailPage'
 import CalendarPage from './pages/CalendarPage'
 import ReportsPage from './pages/ReportsPage'
+import WorkboardPage from './pages/WorkboardPage'
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth()
@@ -95,6 +96,16 @@ export default function App() {
           <ProtectedRoute>
             <AdminRoute>
               <AuditTrailPage />
+            </AdminRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workboard"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <WorkboardPage />
             </AdminRoute>
           </ProtectedRoute>
         }
