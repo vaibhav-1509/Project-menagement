@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -10,6 +11,7 @@ from app.schemas import (
     FileProcessHistoryOut,
     FileProcessStageOut,
     MarkFailedRequest,
+    PriorityChangeRequest,
     ProcessAttemptOut,
     RejectAssignmentRequest,
 )
@@ -250,6 +252,36 @@ def revoke_file(
     )
     db.commit()
     return {"status": "revoked"}
+
+
+@router.patch("/api/admin/files/{file_id}/priority")
+def set_file_priority(
+    file_id: int,
+    payload: PriorityChangeRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bumps a file's triage label - a cosmetic/organizational field, not a
+    workflow gate, so no stage/assignment state is touched."""
+    file_record = db.get(FileRecord, file_id)
+    if file_record is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    old_priority = file_record.Priority
+    file_record.Priority = payload.priority.value
+    file_record.UpdatedAt = datetime.utcnow()
+
+    db.add(
+        AuditTrail(
+            FileID=file_id,
+            Action="PriorityChanged",
+            PerformedByUserID=current_user.UserID,
+            OldValue=json.dumps({"priority": old_priority}),
+            NewValue=json.dumps({"priority": payload.priority.value}),
+        )
+    )
+    db.commit()
+    return {"status": "updated", "priority": payload.priority.value}
 
 
 @router.post("/api/admin/files/{file_id}/approve")

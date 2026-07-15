@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class FileProcessStageSummary(BaseModel):
@@ -27,6 +27,7 @@ class FileOut(BaseModel):
     ActiveAssignmentID: int | None = None
     UpdatedAt: datetime
     IsActive: bool = True
+    Priority: str = "Normal"
     processStages: list[FileProcessStageSummary] = []
     myActiveAssignmentId: int | None = None
 
@@ -42,6 +43,9 @@ class UserOut(BaseModel):
     PhaseID: int | None
     IsActive: bool
     enabledProcessTypeIds: list[int] = []
+    pendingCount: int = 0
+    isAvailable: bool = True
+    isOnLeaveToday: bool = False
 
 
 class MeOut(BaseModel):
@@ -138,6 +142,7 @@ class UpdateUserRequest(BaseModel):
     role_ids: list[int] = Field(min_length=1)
     phase_id: int | None = None
     is_active: bool
+    is_available: bool = True
 
 
 class ResetPasswordRequest(BaseModel):
@@ -286,8 +291,12 @@ class CsvImportRow(BaseModel):
 
 class CsvImportConflict(BaseModel):
     row: CsvImportRow
-    existing_file_id: int
-    existing_version_number: int
+    existing_file_id: int | None = None  # None when the conflict is only against another row in this same batch
+    existing_version_number: int = 0
+    existing_phase_name: str | None = None
+    existing_category_name: str | None = None
+    existing_sub_category_name: str | None = None
+    conflict_scope: str = "database"  # "database" (already in SQL, anywhere) | "batch" (duplicate within this import)
 
 
 class CsvImportPreview(BaseModel):
@@ -429,6 +438,18 @@ class LowWorkloadWorkerOut(BaseModel):
     pendingCount: int
 
 
+class StaleAssignmentOut(BaseModel):
+    assignmentId: int
+    fileId: int
+    fileName: str
+    processTypeId: int
+    processTypeName: str
+    assignedToUserId: int
+    assignedToUsername: str
+    assignedTs: datetime
+    ageDays: int
+
+
 class AdminWorkboardOut(BaseModel):
     pendingApprovals: list[PendingApprovalOut]
     lowWorkloadWorkers: list[LowWorkloadWorkerOut]
@@ -436,3 +457,57 @@ class AdminWorkboardOut(BaseModel):
     checkedWorkerCount: int  # how many workers have an active WorkerProcessPath at all - distinguishes
     # "everyone's fine" (this is > 0, lowWorkloadWorkers is empty) from
     # "nobody's configured yet" (this is 0) - both look like an empty list otherwise.
+    staleAssignments: list[StaleAssignmentOut] = []
+    staleAssignmentDays: int = 3
+
+
+class FilePriority(str, Enum):
+    LOW = "Low"
+    NORMAL = "Normal"
+    HIGH = "High"
+    URGENT = "Urgent"
+
+
+class PriorityChangeRequest(BaseModel):
+    priority: FilePriority
+
+
+class AvailabilityRequest(BaseModel):
+    is_available: bool
+
+
+class AppSettingsOut(BaseModel):
+    lowWorkloadThreshold: int
+    staleAssignmentDays: int
+
+
+class UpdateAppSettingsRequest(BaseModel):
+    low_workload_threshold: int = Field(ge=1)
+    stale_assignment_days: int = Field(ge=1)
+
+
+class UserLeaveOut(BaseModel):
+    id: int
+    userId: int
+    startDate: date
+    endDate: date
+    createdAt: datetime
+
+
+class CreateLeaveRequest(BaseModel):
+    start_date: date
+    end_date: date
+
+    @model_validator(mode="after")
+    def _check_range(self):
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must not be before start_date")
+        return self
+
+
+class MyProfileOut(BaseModel):
+    userId: int
+    username: str
+    roleNames: list[str]
+    phaseId: int | None
+    isAvailable: bool

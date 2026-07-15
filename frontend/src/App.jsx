@@ -10,6 +10,7 @@ import AuditTrailPage from './pages/AuditTrailPage'
 import CalendarPage from './pages/CalendarPage'
 import ReportsPage from './pages/ReportsPage'
 import WorkboardPage from './pages/WorkboardPage'
+import ProfilePage from './pages/ProfilePage'
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth()
@@ -107,6 +108,14 @@ export default function App() {
             <AdminRoute>
               <WorkboardPage />
             </AdminRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

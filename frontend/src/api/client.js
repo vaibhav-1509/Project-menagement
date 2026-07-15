@@ -207,12 +207,13 @@ export function getProcessHistory(fileId) {
 
 export function previewImport(file, manualContext = null) {
   const form = new FormData()
-  form.append('file', file)
+  if (file) form.append('file', file)
   if (manualContext) {
     form.append('phase_name', manualContext.phaseName)
     if (manualContext.categoryName) form.append('category_name', manualContext.categoryName)
     if (manualContext.subCategoryName) form.append('sub_category_name', manualContext.subCategoryName)
     form.append('source_root_path', manualContext.sourceRootPath)
+    if (manualContext.fileNamesText) form.append('file_names_text', manualContext.fileNamesText)
   }
   return request('/admin/imports/preview', { method: 'POST', body: form, isForm: true })
 }
@@ -431,4 +432,54 @@ export function getWorkerProcessPaths(userId) {
 
 export function setWorkerProcessPaths(userId, entries) {
   return request(`/admin/users/${userId}/process-paths`, { method: 'PUT', body: entries })
+}
+
+export function updatePriority(fileId, priority) {
+  return request(`/admin/files/${fileId}/priority`, { method: 'PATCH', body: { priority } })
+}
+
+export function getSettings() {
+  return request('/admin/settings')
+}
+
+export function updateSettings(lowWorkloadThreshold, staleAssignmentDays) {
+  return request('/admin/settings', {
+    method: 'PUT',
+    body: { low_workload_threshold: lowWorkloadThreshold, stale_assignment_days: staleAssignmentDays },
+  })
+}
+
+export function getProfile() {
+  return request('/profile/me')
+}
+
+export function updateAvailability(isAvailable) {
+  return request('/profile/availability', { method: 'PATCH', body: { is_available: isAvailable } })
+}
+
+export function getMyLeave() {
+  return request('/profile/leave')
+}
+
+export function addMyLeave(startDate, endDate) {
+  return request('/profile/leave', { method: 'POST', body: { start_date: startDate, end_date: endDate } })
+}
+
+export function cancelMyLeave(leaveId) {
+  return request(`/profile/leave/${leaveId}`, { method: 'DELETE' })
+}
+
+export function getUserLeave(userId) {
+  return request(`/admin/users/${userId}/leave`)
+}
+
+export function addUserLeave(userId, startDate, endDate) {
+  return request(`/admin/users/${userId}/leave`, {
+    method: 'POST',
+    body: { start_date: startDate, end_date: endDate },
+  })
+}
+
+export function deleteUserLeave(userId, leaveId) {
+  return request(`/admin/users/${userId}/leave/${leaveId}`, { method: 'DELETE' })
 }

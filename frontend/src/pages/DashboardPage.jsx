@@ -167,12 +167,28 @@ export default function DashboardPage() {
     }
   }
 
+  async function handlePriorityChange(fileId, priority) {
+    try {
+      await api.updatePriority(fileId, priority)
+      await loadFiles(filters)
+    } catch (err) {
+      setError(err.message || 'Failed to update priority')
+    }
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar onImportClick={() => setImportOpen(true)} />
+      <Sidebar />
       <main className="main-content">
         <div className="page-header">
-          <FilterBar filters={filters} onChange={setFilters} lookups={lookups} users={users} isAdmin={isAdmin} />
+          <div className="page-header-left">
+            {isAdmin && (
+              <button className="import-trigger" onClick={() => setImportOpen(true)}>
+                + Add Items
+              </button>
+            )}
+            <FilterBar filters={filters} onChange={setFilters} lookups={lookups} users={users} isAdmin={isAdmin} />
+          </div>
           {isAdmin && selectedFiles.length > 0 && (
             <button onClick={() => setMoveOpen(true)}>Move Selected ({selectedFiles.length})</button>
           )}
@@ -197,6 +213,7 @@ export default function DashboardPage() {
             onHistory={(row) => setHistoryFileId(row.FileID)}
             onSetActive={handleSetActive}
             onDelete={handleDelete}
+            onPriorityChange={handlePriorityChange}
             onSelectionChanged={setSelectedFiles}
           />
         )}
@@ -229,7 +246,12 @@ export default function DashboardPage() {
       {historyFileId && <FileHistoryModal fileId={historyFileId} onClose={() => setHistoryFileId(null)} />}
 
       {importOpen && (
-        <ImportModal lookups={lookups} onClose={() => setImportOpen(false)} onImported={() => loadFiles(filters)} />
+        <ImportModal
+          lookups={lookups}
+          initialMode="manual"
+          onClose={() => setImportOpen(false)}
+          onImported={() => loadFiles(filters)}
+        />
       )}
 
       {moveOpen && (

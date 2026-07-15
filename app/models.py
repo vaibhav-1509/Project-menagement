@@ -1,10 +1,12 @@
 import secrets
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -101,6 +103,12 @@ class User(Base):
     # separate lockout flag - so reactivating (admin permission required)
     # already works via the existing Activate/Deactivate toggle.
     FailedLoginCount: Mapped[int] = mapped_column(Integer, default=0)
+    # Lightweight "not taking new work right now" flag - distinct from
+    # IsActive, which gates login/account access entirely. Toggled by the
+    # worker themselves (self-service) or by an admin, without deactivating
+    # the account. Only affects the Assign/Reject picker's default filtering
+    # (frontend-only) - never blocks assignment at the API level.
+    IsAvailable: Mapped[bool] = mapped_column(Boolean, default=True)
 
     roles: Mapped[list["Role"]] = relationship(secondary=UserRoles, back_populates="users")
 
@@ -150,6 +158,11 @@ class FileRecord(Base):
     IsActive: Mapped[bool] = mapped_column(Boolean, default=True)
     CreatedAt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     UpdatedAt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Fixed 4-value app-level label (see schemas.FilePriority) - not a lookup
+    # table like ProcessTypes/Phases, since it's a small cosmetic set that
+    # never needs admin CRUD. Defaults to Normal on every newly created file
+    # (including CSV/manual import); bumped afterward directly in the grid.
+    Priority: Mapped[str] = mapped_column(String(20), default="Normal")
 
 
 class FileVersion(Base):
@@ -240,3 +253,33 @@ class FileTransferLog(Base):
     Status: Mapped[str] = mapped_column(String(20))
     ErrorMessage: Mapped[str | None] = mapped_column(String(500), nullable=True)
     Timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AppSettings(Base):
+    """Singleton row (AppSettingsID is always 1) holding admin-adjustable
+    knobs that don't belong to any single entity - e.g. the Workboard's
+    low-workload/stale-assignment thresholds. Read via a plain SELECT with
+    no WHERE clause (there is only ever one row), not by hardcoding the PK."""
+
+    __tablename__ = "AppSettings"
+    __table_args__ = (CheckConstraint("AppSettingsID = 1"),)
+
+    AppSettingsID: Mapped[int] = mapped_column(Integer, primary_key=True)
+    LowWorkloadThreshold: Mapped[int] = mapped_column(Integer, default=5)
+    StaleAssignmentDays: Mapped[int] = mapped_column(Integer, default=3)
+
+
+class UserLeave(Base):
+    """Full-history leave record - one row per requested date range, never
+    mutated in place (mirrors TaskAssignment's append-only convention) so
+    past and future leave both stay visible instead of a single overwritable
+    date pair on Users."""
+
+    __tablename__ = "UserLeave"
+
+    UserLeaveID: Mapped[int] = mapped_column(Integer, primary_key=True)
+    UserID: Mapped[int] = mapped_column(ForeignKey("Users.UserID"))
+    StartDate: Mapped[date] = mapped_column(Date)
+    EndDate: Mapped[date] = mapped_column(Date)
+    CreatedAt: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    CreatedByUserID: Mapped[int] = mapped_column(ForeignKey("Users.UserID"))

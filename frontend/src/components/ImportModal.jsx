@@ -4,8 +4,8 @@ import FolderBrowserModal from './FolderBrowserModal'
 import ComboSelect from './ComboSelect'
 import * as api from '../api/client'
 
-export default function ImportModal({ lookups, onClose, onImported }) {
-  const [mode, setMode] = useState('full') // 'full' | 'manual'
+export default function ImportModal({ lookups, onClose, onImported, initialMode = 'manual' }) {
+  const [mode, setMode] = useState(initialMode) // 'manual' | 'csv' | 'full'
   const [file, setFile] = useState(null)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef(null)
@@ -13,6 +13,7 @@ export default function ImportModal({ lookups, onClose, onImported }) {
   const [categoryName, setCategoryName] = useState('')
   const [subCategoryName, setSubCategoryName] = useState('')
   const [sourceRootPath, setSourceRootPath] = useState('')
+  const [fileNamesText, setFileNamesText] = useState('')
   const [browserOpen, setBrowserOpen] = useState(false)
   const [preview, setPreview] = useState(null)
   const [resolutions, setResolutions] = useState({})
@@ -28,12 +29,13 @@ export default function ImportModal({ lookups, onClose, onImported }) {
   )
 
   function manualContext() {
-    if (mode !== 'manual') return null
+    if (mode === 'full') return null
     return {
       phaseName,
       categoryName: categoryName || null,
       subCategoryName: subCategoryName || null,
       sourceRootPath,
+      fileNamesText: mode === 'manual' ? fileNamesText : undefined,
     }
   }
 
@@ -54,15 +56,21 @@ export default function ImportModal({ lookups, onClose, onImported }) {
   }
 
   async function handlePreview() {
-    if (!file) return
-    if (mode === 'manual' && (!phaseName || !sourceRootPath)) {
-      setError('Phase and source folder path are required')
+    if (mode === 'full') {
+      if (!file) return
+    } else if (mode === 'csv') {
+      if (!file || !phaseName || !sourceRootPath) {
+        setError('CSV file, phase, and source folder path are required')
+        return
+      }
+    } else if (!phaseName || !sourceRootPath || !fileNamesText.trim()) {
+      setError('Phase, source folder path, and at least one file name are required')
       return
     }
     setLoading(true)
     setError('')
     try {
-      const data = await api.previewImport(file, manualContext())
+      const data = await api.previewImport(mode === 'manual' ? null : file, manualContext())
       setPreview(data)
       const defaults = {}
       data.conflicts.forEach((c) => {
@@ -87,7 +95,7 @@ export default function ImportModal({ lookups, onClose, onImported }) {
         phase_name: c.row.phase_name,
         resolution: resolutions[`${c.row.file_name}::${c.row.phase_name}`] || 'skip',
       }))
-      const res = await api.commitImport({ rows, resolutions: resolutionEntries }, file?.name)
+      const res = await api.commitImport({ rows, resolutions: resolutionEntries }, file?.name || 'manual-entry.csv')
       setResult(res)
       onImported()
     } catch (err) {
@@ -98,36 +106,53 @@ export default function ImportModal({ lookups, onClose, onImported }) {
   }
 
   return (
-    <Modal title="Import CSV" onClose={onClose}>
+    <Modal title="Import / Add Files" onClose={onClose}>
       {!preview && (
         <>
           <div className="mode-tabs">
             <button
               type="button"
-              className={mode === 'full' ? 'active' : 'secondary'}
-              onClick={() => setMode('full')}
-            >
-              Full CSV
-            </button>
-            <button
-              type="button"
               className={mode === 'manual' ? 'active' : 'secondary'}
               onClick={() => setMode('manual')}
             >
-              Manual (pick Phase/Category first)
+              Manual Entry
+            </button>
+            <button
+              type="button"
+              className={mode === 'csv' ? 'active' : 'secondary'}
+              onClick={() => setMode('csv')}
+            >
+              CSV Import
+            </button>
+            <button
+              type="button"
+              className={mode === 'full' ? 'active' : 'secondary'}
+              onClick={() => setMode('full')}
+            >
+              Full CSV Import
             </button>
           </div>
 
-          {mode === 'full' ? (
+          {mode === 'full' && (
             <p className="hint">
               CSV columns: file_name, phase_name, category_name, sub_category_name, source_path
             </p>
-          ) : (
+          )}
+          {mode === 'csv' && (
+            <p className="hint">
+              CSV: just file_name, one per row (header optional). Every row in this batch gets the
+              Phase/Category/Sub-Category and source folder picked below.
+            </p>
+          )}
+          {mode === 'manual' && (
+            <p className="hint">
+              Type in the file/item names below - no CSV needed. Every name gets the Phase/Category/
+              Sub-Category and source folder picked below.
+            </p>
+          )}
+
+          {mode !== 'full' && (
             <>
-              <p className="hint">
-                CSV: just file_name, one per row (header optional). Every row in this batch gets the
-                Phase/Category/Sub-Category and source folder picked below.
-              </p>
               <label>
                 Phase
                 <select
@@ -187,6 +212,18 @@ export default function ImportModal({ lookups, onClose, onImported }) {
             </>
           )}
 
+          {mode === 'manual' && (
+            <label>
+              File / item names (one per line)
+              <textarea
+                value={fileNamesText}
+                onChange={(e) => setFileNamesText(e.target.value)}
+                placeholder={'Hero_Character\nProp_Sword\nEnvironment_Tree'}
+                rows={6}
+              />
+            </label>
+          )}
+
           {browserOpen && (
             <FolderBrowserModal
               startPath={sourceRootPath}
@@ -198,47 +235,58 @@ export default function ImportModal({ lookups, onClose, onImported }) {
             />
           )}
 
-          <div
-            className={`csv-dropzone ${dragActive ? 'active' : ''}`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setDragActive(true)
-            }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={handleDrop}
-          >
-            {file ? (
-              <span>
-                {file.name}{' '}
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setFile(null)
-                  }}
-                >
-                  Remove
-                </button>
-              </span>
-            ) : (
-              <span>Drag &amp; drop a CSV file here, or click to choose</span>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              style={{ display: 'none' }}
-              onChange={(e) => pickFile(e.target.files?.[0])}
-            />
-          </div>
+          {(mode === 'full' || mode === 'csv') && (
+            <div
+              className={`csv-dropzone ${dragActive ? 'active' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragActive(true)
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+            >
+              {file ? (
+                <span>
+                  {file.name}{' '}
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setFile(null)
+                    }}
+                  >
+                    Remove
+                  </button>
+                </span>
+              ) : (
+                <span>Drag &amp; drop a CSV file here, or click to choose</span>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                style={{ display: 'none' }}
+                onChange={(e) => pickFile(e.target.files?.[0])}
+              />
+            </div>
+          )}
           {error && <div className="error-banner">{error}</div>}
           <div className="modal-actions">
             <button onClick={onClose} className="secondary">
               Cancel
             </button>
-            <button onClick={handlePreview} disabled={!file || loading}>
+            <button
+              onClick={handlePreview}
+              disabled={
+                mode === 'full'
+                  ? !file || loading
+                  : mode === 'csv'
+                  ? !file || !phaseName || !sourceRootPath || loading
+                  : !phaseName || !sourceRootPath || !fileNamesText.trim() || loading
+              }
+            >
               {loading ? 'Reading...' : 'Preview'}
             </button>
           </div>
@@ -251,38 +299,58 @@ export default function ImportModal({ lookups, onClose, onImported }) {
             {preview.new_rows.length} new file(s), {preview.conflicts.length} conflict(s).
           </p>
           {preview.conflicts.length > 0 && (
-            <table className="import-conflict-table">
-              <thead>
-                <tr>
-                  <th>File</th>
-                  <th>Phase</th>
-                  <th>Existing</th>
-                  <th>Resolution</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.conflicts.map((c) => {
-                  const key = `${c.row.file_name}::${c.row.phase_name}`
-                  return (
-                    <tr key={key}>
-                      <td>{c.row.file_name}</td>
-                      <td>{c.row.phase_name}</td>
-                      <td>v{c.existing_version_number}</td>
-                      <td>
-                        <select
-                          value={resolutions[key]}
-                          onChange={(e) => setResolutions({ ...resolutions, [key]: e.target.value })}
-                        >
-                          <option value="skip">Skip</option>
-                          <option value="overwrite">Overwrite</option>
-                          <option value="new_version">New Version</option>
-                        </select>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <>
+              <div className="warning-banner">
+                {preview.conflicts.length} file name(s) below already exist - either elsewhere in the database
+                (different phase/category) or duplicated within this same import. Left as <strong>Skip</strong>,
+                they will not be imported and the existing file is left untouched.
+              </div>
+              <table className="import-conflict-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Importing To</th>
+                    <th>Already Exists At</th>
+                    <th>Resolution</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.conflicts.map((c) => {
+                    const key = `${c.row.file_name}::${c.row.phase_name}`
+                    const importingTo = [c.row.phase_name, c.row.category_name, c.row.sub_category_name]
+                      .filter(Boolean)
+                      .join(' / ')
+                    const existingAt = [c.existing_phase_name, c.existing_category_name, c.existing_sub_category_name]
+                      .filter(Boolean)
+                      .join(' / ')
+                    return (
+                      <tr key={key}>
+                        <td>{c.row.file_name}</td>
+                        <td>{importingTo}</td>
+                        <td>
+                          {existingAt || '—'}
+                          {c.conflict_scope === 'batch' ? (
+                            <span className="hint"> (duplicate within this import)</span>
+                          ) : (
+                            c.existing_file_id && <span className="hint"> (v{c.existing_version_number})</span>
+                          )}
+                        </td>
+                        <td>
+                          <select
+                            value={resolutions[key]}
+                            onChange={(e) => setResolutions({ ...resolutions, [key]: e.target.value })}
+                          >
+                            <option value="skip">Skip</option>
+                            <option value="overwrite">Overwrite</option>
+                            <option value="new_version">New Version</option>
+                          </select>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
           {error && <div className="error-banner">{error}</div>}
           <div className="modal-actions">

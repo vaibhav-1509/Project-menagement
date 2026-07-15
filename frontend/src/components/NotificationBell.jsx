@@ -15,6 +15,7 @@ export default function NotificationBell() {
   const [items, setItems] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [lowWorkload, setLowWorkload] = useState([])
+  const [staleCount, setStaleCount] = useState(0)
   const containerRef = useRef(null)
 
   async function load() {
@@ -30,6 +31,7 @@ export default function NotificationBell() {
       try {
         const board = await api.getAdminWorkboard()
         setLowWorkload(board.lowWorkloadWorkers)
+        setStaleCount(board.staleAssignments.length)
       } catch {
         // ignore
       }
@@ -121,6 +123,19 @@ export default function NotificationBell() {
                   {w.username} - {w.pendingCount} pending
                 </div>
               ))}
+            </div>
+          )}
+          {isAdmin && staleCount > 0 && (
+            <div className="notification-reminders">
+              <div
+                className="notification-item"
+                onClick={() => {
+                  setOpen(false)
+                  navigate('/workboard')
+                }}
+              >
+                {staleCount} assignment{staleCount === 1 ? ' has' : 's have'} been sitting stale too long
+              </div>
             </div>
           )}
         </div>

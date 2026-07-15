@@ -12,7 +12,8 @@ router = APIRouter(prefix="/api/admin/imports", tags=["imports"])
 
 @router.post("/preview", response_model=CsvImportPreview)
 async def preview(
-    file: UploadFile,
+    file: UploadFile | None = None,
+    file_names_text: str | None = Form(None),
     phase_name: str | None = Form(None),
     category_name: str | None = Form(None),
     sub_category_name: str | None = Form(None),
@@ -20,25 +21,40 @@ async def preview(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Two CSV shapes, picked by whether phase_name is supplied:
-    - Full CSV (phase_name omitted): every row carries its own file_name,
-      phase_name, category_name, sub_category_name, source_path.
-    - Manual import (phase_name given): the CSV is filename-only - Phase/
-      Category/Sub-Category/source root were picked once in the UI."""
-    raw = await file.read()
+    """Three ways to supply rows, picked by what's present:
+    - Full CSV (file given, phase_name omitted): every row carries its own
+      file_name, phase_name, category_name, sub_category_name, source_path.
+    - Manual CSV (file + phase_name given): the CSV is filename-only - Phase/
+      Category/Sub-Category/source root were picked once in the UI.
+    - Manual typed entry (file_names_text given, no file): same as manual CSV
+      but the names were typed directly in the UI instead of uploaded."""
     try:
-        if phase_name:
-            if not source_root_path:
-                raise ValueError("Source folder path is required for a manual import")
+        if file is not None:
+            raw = await file.read()
+            if phase_name:
+                if not source_root_path:
+                    raise ValueError("Source folder path is required for a manual import")
+                rows = parse_csv_simple(
+                    raw,
+                    phase_name=phase_name,
+                    category_name=category_name or None,
+                    sub_category_name=sub_category_name or None,
+                    source_root=source_root_path,
+                )
+            else:
+                rows = parse_csv(raw)
+        elif file_names_text is not None:
+            if not phase_name or not source_root_path:
+                raise ValueError("Phase and source folder path are required")
             rows = parse_csv_simple(
-                raw,
+                file_names_text.encode("utf-8"),
                 phase_name=phase_name,
                 category_name=category_name or None,
                 sub_category_name=sub_category_name or None,
                 source_root=source_root_path,
             )
         else:
-            rows = parse_csv(raw)
+            raise ValueError("Either a CSV file or a list of file names is required")
         return preview_import(db, rows)
     except (KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

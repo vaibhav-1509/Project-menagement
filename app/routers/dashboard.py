@@ -155,6 +155,7 @@ def list_files(
                 ActiveAssignmentID=my_active_by_file.get(f.FileID),
                 UpdatedAt=f.UpdatedAt,
                 IsActive=f.IsActive,
+                Priority=f.Priority,
                 processStages=process_stages,
                 myActiveAssignmentId=my_active_by_file.get(f.FileID),
             )

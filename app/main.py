@@ -22,7 +22,9 @@ from app.routers import (  # noqa: E402
     lookups,
     notifications,
     process_types,
+    profile,
     reports,
+    settings as settings_router,
     taxonomy,
     users,
     workboard,
@@ -88,6 +90,8 @@ app.include_router(calendar.router)
 app.include_router(reports.router)
 app.include_router(notifications.router)
 app.include_router(workboard.router)
+app.include_router(settings_router.router)
+app.include_router(profile.router)
 
 
 @app.get("/api/health")

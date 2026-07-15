@@ -8,12 +8,66 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
   const [roleIds, setRoleIds] = useState(user.roleIds || [])
   const [phaseId, setPhaseId] = useState(user.PhaseID ? String(user.PhaseID) : '')
   const [isActive, setIsActive] = useState(user.IsActive)
+  const [isAvailable, setIsAvailable] = useState(user.isAvailable ?? true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const [pathsByType, setPathsByType] = useState({})
   const [pathsLoading, setPathsLoading] = useState(true)
   const [browserTarget, setBrowserTarget] = useState(null) // { processTypeId, field: 'pending' | 'complete' }
+
+  const [leave, setLeave] = useState([])
+  const [leaveLoading, setLeaveLoading] = useState(true)
+  const [leaveStart, setLeaveStart] = useState('')
+  const [leaveEnd, setLeaveEnd] = useState('')
+  const [leaveError, setLeaveError] = useState('')
+  const [leaveSaving, setLeaveSaving] = useState(false)
+
+  function reloadLeave() {
+    return api
+      .getUserLeave(user.UserID)
+      .then(setLeave)
+      .catch((err) => setLeaveError(err.message || 'Failed to load leave'))
+  }
+
+  useEffect(() => {
+    reloadLeave().finally(() => setLeaveLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleAddLeave(e) {
+    e.preventDefault()
+    if (!leaveStart || !leaveEnd) {
+      setLeaveError('Both a start and end date are required.')
+      return
+    }
+    if (leaveEnd < leaveStart) {
+      setLeaveError('End date must not be before the start date.')
+      return
+    }
+    setLeaveSaving(true)
+    setLeaveError('')
+    try {
+      await api.addUserLeave(user.UserID, leaveStart, leaveEnd)
+      setLeaveStart('')
+      setLeaveEnd('')
+      await reloadLeave()
+    } catch (err) {
+      setLeaveError(err.message || 'Failed to add leave')
+    } finally {
+      setLeaveSaving(false)
+    }
+  }
+
+  async function handleCancelLeave(leaveId) {
+    if (!window.confirm('Cancel this leave period?')) return
+    try {
+      await api.deleteUserLeave(user.UserID, leaveId)
+      await reloadLeave()
+    } catch (err) {
+      setLeaveError(err.message || 'Failed to cancel leave')
+    }
+  }
 
   // Admin and worker roles aren't mutually exclusive - a user can hold both
   // (e.g. an admin who also does Polish work). Process Type Paths only make
@@ -83,6 +137,7 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
         role_ids: roleIds,
         phase_id: phaseId ? Number(phaseId) : null,
         is_active: isActive,
+        is_available: isAvailable,
       })
       await api.setWorkerProcessPaths(user.UserID, entries)
       onClose()
@@ -112,6 +167,57 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
           Active
         </label>
+        <label className="checkbox-row">
+          <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} />
+          Available <span className="hint">(unchecking hides them from the Assign/Reject picker by default, without deactivating the account)</span>
+        </label>
+
+        <div className="move-section">
+          <h3>Leave</h3>
+          <p className="hint">Date ranges this worker is on leave - hides them from the Assign/Reject picker by default during that window.</p>
+          <div className="settings-form">
+            <label>
+              Start date
+              <input type="date" value={leaveStart} onChange={(e) => setLeaveStart(e.target.value)} />
+            </label>
+            <label>
+              End date
+              <input type="date" value={leaveEnd} onChange={(e) => setLeaveEnd(e.target.value)} />
+            </label>
+            <button type="button" onClick={handleAddLeave} disabled={leaveSaving}>
+              {leaveSaving ? 'Adding...' : 'Add Leave'}
+            </button>
+          </div>
+          {leaveError && <div className="error-banner">{leaveError}</div>}
+          {leaveLoading ? (
+            <div className="loading">Loading...</div>
+          ) : leave.length === 0 ? (
+            <p className="hint">No leave periods recorded.</p>
+          ) : (
+            <table className="users-table">
+              <thead>
+                <tr>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leave.map((l) => (
+                  <tr key={l.id}>
+                    <td>{l.startDate}</td>
+                    <td>{l.endDate}</td>
+                    <td>
+                      <button type="button" className="secondary" onClick={() => handleCancelLeave(l.id)}>
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
 
         {hasWorkerRole && (
           <div className="move-section">

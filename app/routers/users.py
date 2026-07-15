@@ -1,5 +1,6 @@
 import os
 import secrets
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select
@@ -7,12 +8,26 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import AuditTrail, ImportBatch, ProcessType, Role, TaskAssignment, User, UserRoles, WorkerProcessPath
+from app.models import (
+    AuditTrail,
+    FileProcessStatus,
+    FileStatus,
+    ImportBatch,
+    ProcessType,
+    Role,
+    TaskAssignment,
+    User,
+    UserLeave,
+    UserRoles,
+    WorkerProcessPath,
+)
 from app.schemas import (
+    CreateLeaveRequest,
     CreateUserRequest,
     ResetPasswordRequest,
     SetActiveRequest,
     UpdateUserRequest,
+    UserLeaveOut,
     UserOut,
     WorkerProcessPathIn,
     WorkerProcessPathOut,
@@ -22,12 +37,29 @@ from app.security import hash_password, require_admin, user_is_admin
 router = APIRouter(prefix="/api/admin/users", tags=["users"])
 
 
-def _to_user_out(db: Session, u: User) -> UserOut:
+def _to_user_out(db: Session, u: User, *, pending_count: int | None = None, on_leave_today: bool | None = None) -> UserOut:
     enabled_ids = db.scalars(
         select(WorkerProcessPath.ProcessTypeID).where(
             WorkerProcessPath.UserID == u.UserID, WorkerProcessPath.IsActive == True  # noqa: E712
         )
     ).all()
+    if pending_count is None:
+        pending_id = db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Pending"))
+        pending_count = db.scalar(
+            select(func.count()).where(
+                FileProcessStatus.StatusID == pending_id, FileProcessStatus.AssignedToUserID == u.UserID
+            )
+        ) or 0
+    if on_leave_today is None:
+        today = datetime.utcnow().date()
+        on_leave_today = (
+            db.scalar(
+                select(UserLeave.UserLeaveID).where(
+                    UserLeave.UserID == u.UserID, UserLeave.StartDate <= today, UserLeave.EndDate >= today
+                )
+            )
+            is not None
+        )
     return UserOut(
         UserID=u.UserID,
         Username=u.Username,
@@ -36,6 +68,9 @@ def _to_user_out(db: Session, u: User) -> UserOut:
         PhaseID=u.PhaseID,
         IsActive=u.IsActive,
         enabledProcessTypeIds=list(enabled_ids),
+        pendingCount=pending_count,
+        isAvailable=u.IsAvailable,
+        isOnLeaveToday=on_leave_today,
     )
 
 
@@ -64,7 +99,33 @@ def list_users(current_user: User = Depends(require_admin), db: Session = Depend
     """Admin-only user directory - powers the Assign modal's user picker, the
     dashboard's 'Assigned To' filter/column, and the User Management page."""
     users = db.scalars(select(User).options(selectinload(User.roles))).all()
-    return [_to_user_out(db, u) for u in users]
+
+    # Batch both per-user data points up front rather than letting
+    # _to_user_out query per-user for every row - this endpoint is the
+    # Assign/Reject picker's hot path, so an N+1 here is worth avoiding even
+    # though _to_user_out's existing enabled_ids query stays per-user (small
+    # user counts, not worth the churn to fix what wasn't asked for).
+    pending_id = db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Pending"))
+    pending_counts = dict(
+        db.execute(
+            select(FileProcessStatus.AssignedToUserID, func.count())
+            .where(FileProcessStatus.StatusID == pending_id)
+            .group_by(FileProcessStatus.AssignedToUserID)
+        ).all()
+    )
+    today = datetime.utcnow().date()
+    on_leave_ids = set(
+        db.scalars(
+            select(UserLeave.UserID).where(UserLeave.StartDate <= today, UserLeave.EndDate >= today).distinct()
+        ).all()
+    )
+
+    return [
+        _to_user_out(
+            db, u, pending_count=pending_counts.get(u.UserID, 0), on_leave_today=u.UserID in on_leave_ids
+        )
+        for u in users
+    ]
 
 
 @router.post("", response_model=UserOut, status_code=201)
@@ -119,6 +180,7 @@ def update_user(
     user.roles = roles
     user.PhaseID = payload.phase_id
     user.IsActive = payload.is_active
+    user.IsAvailable = payload.is_available
     db.commit()
     db.refresh(user)
     return _to_user_out(db, user)
@@ -312,3 +374,60 @@ def set_process_paths(
 
     db.commit()
     return get_process_paths(user_id, current_user, db)
+
+
+def _to_leave_out(row: UserLeave) -> UserLeaveOut:
+    return UserLeaveOut(id=row.UserLeaveID, userId=row.UserID, startDate=row.StartDate, endDate=row.EndDate, createdAt=row.CreatedAt)
+
+
+@router.get("/{user_id}/leave", response_model=list[UserLeaveOut])
+def get_user_leave(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin's view of any worker's leave history - including admin's own,
+    since an admin can open their own row through this same page/endpoint
+    (no special-casing needed for 'admin manages their own leave too')."""
+    if db.get(User, user_id) is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    rows = db.scalars(
+        select(UserLeave).where(UserLeave.UserID == user_id).order_by(UserLeave.StartDate.desc())
+    ).all()
+    return [_to_leave_out(r) for r in rows]
+
+
+@router.post("/{user_id}/leave", response_model=UserLeaveOut, status_code=201)
+def add_user_leave(
+    user_id: int,
+    payload: CreateLeaveRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if db.get(User, user_id) is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    row = UserLeave(
+        UserID=user_id,
+        StartDate=payload.start_date,
+        EndDate=payload.end_date,
+        CreatedByUserID=current_user.UserID,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return _to_leave_out(row)
+
+
+@router.delete("/{user_id}/leave/{leave_id}")
+def delete_user_leave(
+    user_id: int,
+    leave_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    row = db.get(UserLeave, leave_id)
+    if row is None or row.UserID != user_id:
+        raise HTTPException(status_code=404, detail="Leave record not found")
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}

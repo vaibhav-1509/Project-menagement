@@ -4,18 +4,11 @@ import { useAuth } from '../context/AuthContext'
 import ChangePasswordModal from './ChangePasswordModal'
 import NotificationBell from './NotificationBell'
 
-export default function Sidebar({ onImportClick }) {
+export default function Sidebar() {
   const { username, myRoleNames, isAdmin, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
-
-  function handleImportClick() {
-    // Import only makes sense in the file grid's context. If we're not on the
-    // dashboard (no onImportClick handler passed in), navigate there first.
-    if (onImportClick) onImportClick()
-    else navigate('/dashboard')
-  }
 
   return (
     <aside className="sidebar">
@@ -36,11 +29,6 @@ export default function Sidebar({ onImportClick }) {
         >
           Browse
         </button>
-        {isAdmin && (
-          <button className="nav-item nav-item-button" onClick={handleImportClick}>
-            Import CSV
-          </button>
-        )}
         <button
           className={`nav-item nav-item-button ${location.pathname === '/reports' ? 'active' : ''}`}
           onClick={() => navigate('/reports')}
@@ -52,6 +40,12 @@ export default function Sidebar({ onImportClick }) {
           onClick={() => navigate('/calendar')}
         >
           Calendar
+        </button>
+        <button
+          className={`nav-item nav-item-button ${location.pathname === '/profile' ? 'active' : ''}`}
+          onClick={() => navigate('/profile')}
+        >
+          My Profile
         </button>
         {isAdmin && (
           <button

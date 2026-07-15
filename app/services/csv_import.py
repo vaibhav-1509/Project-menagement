@@ -74,31 +74,60 @@ def parse_csv_simple(
 
 
 def preview_import(db: Session, rows: list[CsvImportRow]) -> CsvImportPreview:
+    """Duplicate detection is by FileName alone, database-wide - a file already
+    sitting in a different Phase/Category/Sub-Category is still the same file
+    and must be flagged, not silently re-created under a second identity.
+
+    Two distinct conflict sources, both surfaced the same way to the caller:
+    - "database": the name already exists somewhere in FileRecords (any phase).
+    - "batch": the name isn't in the database yet, but an earlier row in this
+      same import already claims it - the first occurrence wins, everything
+      after it is a conflict against that first occurrence."""
     new_rows: list[CsvImportRow] = []
     conflicts: list[CsvImportConflict] = []
+    staged: dict[str, CsvImportRow] = {}  # file_name -> the row that will create it, for this batch only
 
     for row in rows:
         phase = db.scalar(select(Phase).where(Phase.PhaseName == row.phase_name))
         if phase is None:
             raise ValueError(f"Unknown phase '{row.phase_name}' for file '{row.file_name}'")
 
-        existing = db.scalar(
-            select(FileRecord).where(
-                FileRecord.FileName == row.file_name, FileRecord.PhaseID == phase.PhaseID
+        existing = db.scalar(select(FileRecord).where(FileRecord.FileName == row.file_name))
+        if existing is not None:
+            existing_phase = db.get(Phase, existing.PhaseID)
+            existing_category = db.get(Category, existing.CategoryID) if existing.CategoryID else None
+            existing_sub_category = db.get(SubCategory, existing.SubCategoryID) if existing.SubCategoryID else None
+            current_version = db.get(FileVersion, existing.CurrentVersionID) if existing.CurrentVersionID else None
+            conflicts.append(
+                CsvImportConflict(
+                    row=row,
+                    existing_file_id=existing.FileID,
+                    existing_version_number=current_version.VersionNumber if current_version else 0,
+                    existing_phase_name=existing_phase.PhaseName if existing_phase else None,
+                    existing_category_name=existing_category.CategoryName if existing_category else None,
+                    existing_sub_category_name=existing_sub_category.SubCategoryName if existing_sub_category else None,
+                    conflict_scope="database",
+                )
             )
-        )
-        if existing is None:
-            new_rows.append(row)
             continue
 
-        current_version = db.get(FileVersion, existing.CurrentVersionID) if existing.CurrentVersionID else None
-        conflicts.append(
-            CsvImportConflict(
-                row=row,
-                existing_file_id=existing.FileID,
-                existing_version_number=current_version.VersionNumber if current_version else 0,
+        staged_row = staged.get(row.file_name)
+        if staged_row is not None:
+            conflicts.append(
+                CsvImportConflict(
+                    row=row,
+                    existing_file_id=None,
+                    existing_version_number=0,
+                    existing_phase_name=staged_row.phase_name,
+                    existing_category_name=staged_row.category_name,
+                    existing_sub_category_name=staged_row.sub_category_name,
+                    conflict_scope="batch",
+                )
             )
-        )
+            continue
+
+        new_rows.append(row)
+        staged[row.file_name] = row
 
     return CsvImportPreview(new_rows=new_rows, conflicts=conflicts)
 
@@ -156,11 +185,10 @@ def commit_import(db: Session, request: CsvImportCommitRequest, imported_by_user
                 category_id = _lookup_or_create_category(db, phase.PhaseID, row.category_name)
                 sub_category_id = _lookup_or_create_subcategory(db, category_id, row.sub_category_name)
 
-                existing = db.scalar(
-                    select(FileRecord).where(
-                        FileRecord.FileName == row.file_name, FileRecord.PhaseID == phase.PhaseID
-                    )
-                )
+                # Database-wide by name alone (matches preview_import) - a file
+                # already sitting under a different Phase/Category is still the
+                # same file and must never get re-created under a new identity.
+                existing = db.scalar(select(FileRecord).where(FileRecord.FileName == row.file_name))
 
                 if existing is None:
                     version = FileVersion(

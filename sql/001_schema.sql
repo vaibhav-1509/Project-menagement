@@ -82,7 +82,12 @@ CREATE TABLE Users (
     -- success or reactivation. Reaching the app's MAX_FAILED_LOGIN_ATTEMPTS
     -- sets IsActive=0 above - the same Deactivate an admin can click
     -- manually, not a separate lockout flag.
-    FailedLoginCount INT NOT NULL DEFAULT 0
+    FailedLoginCount INT NOT NULL DEFAULT 0,
+    -- Lightweight "not taking new work right now" flag - distinct from
+    -- IsActive (account access). Toggled by the worker or an admin; only
+    -- affects the Assign/Reject picker's default filtering, never blocks
+    -- assignment at the API level.
+    IsAvailable      BIT NOT NULL DEFAULT 1
 );
 GO
 
@@ -145,6 +150,9 @@ CREATE TABLE Files (
     IsActive            BIT NOT NULL DEFAULT 1,
     CreatedAt           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedAt           DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    -- Fixed 4-value app-level label - not a lookup table, since it's a
+    -- small cosmetic set that never needs admin CRUD.
+    Priority            NVARCHAR(20) NOT NULL DEFAULT 'Normal' CHECK (Priority IN ('Low','Normal','High','Urgent')),
     CONSTRAINT UQ_File_Name_Phase UNIQUE (FileName, PhaseID)
 );
 GO
@@ -260,6 +268,33 @@ CREATE TABLE Notifications (
 GO
 CREATE INDEX IX_Notifications_Recipient_Read ON Notifications(RecipientUserID, IsRead);
 CREATE INDEX IX_Notifications_Recipient_Created ON Notifications(RecipientUserID, CreatedAt);
+GO
+
+-- Singleton row (AppSettingsID always 1) holding admin-adjustable knobs that
+-- don't belong to any single entity - the Workboard's low-workload and
+-- stale-assignment thresholds.
+CREATE TABLE AppSettings (
+    AppSettingsID        INT NOT NULL PRIMARY KEY CHECK (AppSettingsID = 1),
+    LowWorkloadThreshold INT NOT NULL DEFAULT 5,
+    StaleAssignmentDays  INT NOT NULL DEFAULT 3
+);
+GO
+INSERT INTO AppSettings (AppSettingsID, LowWorkloadThreshold, StaleAssignmentDays) VALUES (1, 5, 3);
+GO
+
+-- Full-history leave record - one row per requested date range, never
+-- mutated in place (mirrors TaskAssignments' append-only convention) so
+-- past and future leave both stay visible.
+CREATE TABLE UserLeave (
+    UserLeaveID     INT IDENTITY(1,1) PRIMARY KEY,
+    UserID          INT NOT NULL FOREIGN KEY REFERENCES Users(UserID),
+    StartDate       DATE NOT NULL,
+    EndDate         DATE NOT NULL,
+    CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedByUserID INT NOT NULL FOREIGN KEY REFERENCES Users(UserID)
+);
+GO
+CREATE INDEX IX_UserLeave_User_Dates ON UserLeave(UserID, StartDate, EndDate);
 GO
 
 /* -------------------------------------------------------------------------

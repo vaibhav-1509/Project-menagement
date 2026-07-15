@@ -541,6 +541,68 @@ def _migrate_add_fileprocessstatus_completion_index(cursor) -> None:
     print("FileProcessStatus completion index added.")
 
 
+def _migrate_add_files_priority(cursor) -> None:
+    """Fixed 4-value app-level label (Low/Normal/High/Urgent) - not a lookup
+    table, since it's a small cosmetic set that never needs admin CRUD.
+    Existing rows backfill to 'Normal' via the DEFAULT constraint."""
+    print("Adding Files.Priority...")
+    cursor.execute(
+        "ALTER TABLE Files ADD Priority NVARCHAR(20) NOT NULL "
+        "CONSTRAINT DF_Files_Priority DEFAULT 'Normal' "
+        "CONSTRAINT CK_Files_Priority CHECK (Priority IN ('Low','Normal','High','Urgent'))"
+    )
+    print("Files.Priority added.")
+
+
+def _migrate_add_users_is_available(cursor) -> None:
+    """Lightweight 'not taking new work right now' flag - distinct from
+    IsActive (account access). Toggled by the worker or an admin; only
+    affects the Assign/Reject picker's default filtering, never blocks
+    assignment at the API level."""
+    print("Adding Users.IsAvailable...")
+    cursor.execute("ALTER TABLE Users ADD IsAvailable BIT NOT NULL CONSTRAINT DF_Users_IsAvailable DEFAULT 1")
+    print("Users.IsAvailable added.")
+
+
+def _migrate_create_app_settings(cursor) -> None:
+    """Singleton row (AppSettingsID always 1) holding admin-adjustable knobs
+    that don't belong to any single entity - the Workboard's low-workload and
+    stale-assignment thresholds."""
+    print("Creating AppSettings (singleton admin-adjustable knobs)...")
+    cursor.execute(
+        """
+        CREATE TABLE AppSettings (
+            AppSettingsID        INT NOT NULL PRIMARY KEY CHECK (AppSettingsID = 1),
+            LowWorkloadThreshold INT NOT NULL DEFAULT 5,
+            StaleAssignmentDays  INT NOT NULL DEFAULT 3
+        )
+        """
+    )
+    cursor.execute("INSERT INTO AppSettings (AppSettingsID, LowWorkloadThreshold, StaleAssignmentDays) VALUES (1, 5, 3)")
+    print("AppSettings created and seeded.")
+
+
+def _migrate_create_user_leave(cursor) -> None:
+    """Full-history leave record - one row per requested date range, never
+    mutated in place (mirrors TaskAssignments' append-only convention) so
+    past and future leave both stay visible."""
+    print("Creating UserLeave...")
+    cursor.execute(
+        """
+        CREATE TABLE UserLeave (
+            UserLeaveID     INT IDENTITY(1,1) PRIMARY KEY,
+            UserID          INT NOT NULL FOREIGN KEY REFERENCES Users(UserID),
+            StartDate       DATE NOT NULL,
+            EndDate         DATE NOT NULL,
+            CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CreatedByUserID INT NOT NULL FOREIGN KEY REFERENCES Users(UserID)
+        )
+        """
+    )
+    cursor.execute("CREATE INDEX IX_UserLeave_User_Dates ON UserLeave(UserID, StartDate, EndDate)")
+    print("UserLeave created.")
+
+
 def _run_migrations(cursor) -> None:
     """Ordered, idempotent post-install migrations - each checks its own
     precondition so re-running apply_schema() is always safe."""
@@ -580,6 +642,14 @@ def _run_migrations(cursor) -> None:
         _migrate_add_fileprocessstatus_completion_index(cursor)
     if not _table_exists(cursor, "Notifications"):
         _migrate_create_notifications(cursor)
+    if not _column_exists(cursor, "Files", "Priority"):
+        _migrate_add_files_priority(cursor)
+    if not _column_exists(cursor, "Users", "IsAvailable"):
+        _migrate_add_users_is_available(cursor)
+    if not _table_exists(cursor, "AppSettings"):
+        _migrate_create_app_settings(cursor)
+    if not _table_exists(cursor, "UserLeave"):
+        _migrate_create_user_leave(cursor)
     _migrate_fix_sp_create_first_admin(cursor)
 
 

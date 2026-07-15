@@ -30,6 +30,15 @@ function statusClass(statusName) {
   return ''
 }
 
+const PRIORITY_VALUES = ['Low', 'Normal', 'High', 'Urgent']
+
+function priorityClass(priority) {
+  if (priority === 'Urgent') return 'inactive'
+  if (priority === 'High') return 'warning'
+  if (priority === 'Low') return 'priority-low'
+  return ''
+}
+
 // The next assignable stage for a file: the first non-Complete stage whose
 // predecessor is Complete (or has no predecessor) and that isn't already
 // mid-flight. Sequential gating means at most one stage is ever assignable.
@@ -82,6 +91,7 @@ export default function FilesGrid({
   onHistory,
   onSetActive,
   onDelete,
+  onPriorityChange,
   onSelectionChanged,
   readOnly = false,
 }) {
@@ -144,6 +154,16 @@ export default function FilesGrid({
         headerName: 'Sub-Category',
         flex: 1,
         valueGetter: (p) => lookupName(lookups.subCategories, p.data.SubCategoryID),
+      },
+      {
+        field: 'Priority',
+        headerName: 'Priority',
+        flex: 0.9,
+        editable: !readOnly && isAdmin,
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: { values: PRIORITY_VALUES },
+        onCellValueChanged: (p) => onPriorityChange?.(p.data.FileID, p.newValue),
+        cellRenderer: (p) => <span className={`status-pill ${priorityClass(p.value)}`}>{p.value}</span>,
       },
       {
         headerName: 'Location',
@@ -288,6 +308,7 @@ export default function FilesGrid({
       onHistory,
       onSetActive,
       onDelete,
+      onPriorityChange,
     ]
   )
 

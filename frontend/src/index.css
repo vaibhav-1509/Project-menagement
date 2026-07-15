@@ -498,6 +498,16 @@ textarea {
   justify-content: space-between;
 }
 
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.import-trigger {
+  white-space: nowrap;
+}
+
 .page-header h1 {
   font-size: 18px;
   margin: 0;
@@ -552,6 +562,12 @@ textarea {
 .status-pill.warning {
   background: var(--warning-bg);
   color: var(--warning);
+}
+
+.status-pill.priority-low {
+  background: rgba(216, 214, 224, 0.08);
+  color: var(--text);
+  opacity: 0.65;
 }
 
 .checkbox-row {
@@ -821,6 +837,25 @@ textarea {
 
 .reports-panel-wide {
   grid-column: 1 / -1;
+}
+
+.settings-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 4px;
+}
+
+.settings-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.settings-form input[type='number'] {
+  width: 100px;
 }
 
 .taxonomy-progress-header {
