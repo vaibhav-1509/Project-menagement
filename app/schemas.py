@@ -231,33 +231,33 @@ class BucketCountOut(BaseModel):
     count: int
 
 
-class WeekSeriesOut(BaseModel):
-    days: list[BucketCountOut]
-
-
-class MonthSeriesOut(BaseModel):
-    days: list[BucketCountOut]
-
-
-class YearSeriesOut(BaseModel):
-    months: list[BucketCountOut]
-
-
-class ReportsTotalsOut(BaseModel):
-    today: int
-    thisWeek: int
-    thisMonth: int
-    thisYear: int
-
-
 class ReportsCompletionsOut(BaseModel):
-    referenceDate: str
-    totals: ReportsTotalsOut
-    week: WeekSeriesOut
-    month: MonthSeriesOut
-    year: YearSeriesOut
-    weekComparison: list[BucketCountOut]
-    monthComparison: list[BucketCountOut]
+    """Everything needed to render one custom [startDate, endDate] range:
+    a daily bar series across the whole range, a 2-bucket comparison against
+    the immediately-preceding period of equal length, and a breakdown by
+    process type - replaces the old fixed week/month/year-around-a-single-
+    reference-date shape entirely."""
+
+    startDate: str
+    endDate: str
+    totalInRange: int
+    series: list[BucketCountOut]
+    comparison: list[BucketCountOut]
+    processTypeBreakdown: list[BucketCountOut]
+
+
+class ReportsDetailRowOut(BaseModel):
+    fileName: str
+    processType: str
+    assignedTo: str
+    status: str
+    assignedTs: datetime | None = None
+    completionTs: datetime | None = None
+    reassignedTo: str | None = None
+
+
+class ReportsDetailOut(BaseModel):
+    rows: list[ReportsDetailRowOut]
 
 
 class TaxonomyProgressItemOut(BaseModel):
@@ -479,11 +479,17 @@ class AvailabilityRequest(BaseModel):
 class AppSettingsOut(BaseModel):
     lowWorkloadThreshold: int
     staleAssignmentDays: int
+    allPendingPath: str | None = None
+    adminPendingPath: str | None = None
+    adminCompletePath: str | None = None
 
 
 class UpdateAppSettingsRequest(BaseModel):
     low_workload_threshold: int = Field(ge=1)
     stale_assignment_days: int = Field(ge=1)
+    all_pending_path: str | None = None
+    admin_pending_path: str | None = None
+    admin_complete_path: str | None = None
 
 
 class UserLeaveOut(BaseModel):

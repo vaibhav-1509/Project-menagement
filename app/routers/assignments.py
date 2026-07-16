@@ -100,16 +100,24 @@ def fail_assignment(
     db: Session = Depends(get_db),
 ):
     """Worker (or admin) reports they could not finish this stage - requires a
-    reason, which stays visible to whoever picks up the reassignment. No
-    physical file move; the folder stays exactly where it is."""
+    reason, which stays visible to whoever picks up the reassignment. Moves
+    the in-progress folder from the worker's Pending into their own Complete
+    folder (same handoff point as a normal Complete), so reassignment - same
+    worker or a different one - always sources from Complete."""
     try:
-        mark_assignment_failed(db, assignment_id, payload.reason, current_user)
+        result = mark_assignment_failed(db, assignment_id, payload.reason, current_user)
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except FileLockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except TransferVerificationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
 
-    return {"status": "failed"}
+    return {"status": "failed", "dest_path": result.dest_path, "warning": result.warning}
 
 
 @router.post("/api/admin/files/{file_id}/reset")

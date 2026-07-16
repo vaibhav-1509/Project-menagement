@@ -179,7 +179,7 @@ Every other Category consumer is phase-aware: `FilterBar.jsx`'s category dropdow
 
 Verified end-to-end against a live SQL Server, both as a single process (`app/main.py` serving `frontend/dist`, including the SPA-fallback and path-traversal guard on the catch-all route) and via the dev proxy: login → dashboard (role-scoped) → CSV import (preview + commit, both full and manual mode) → move-category → move-phase (including the active-assignment skip and the duplicate-name collision skip) → add/deactivate/reactivate/delete Phase/Category/Sub-Category → delete blocked while in use (files, users, categories, or PhasePaths, depending on level) → same category name reused across two phases → Assign (real Copy-Verify-Delete folder move) → Complete (artist) → Reset (admin) → create/edit/deactivate a user → last-admin protection → self-service password change, all through the same HTTP calls the React app makes.
 
-Not built yet: Reports, Calendar, Audit Trail view, and a Settings UI for `PhasePaths` (currently SQL-only - see §5 step 3).
+Not built yet: Reports, Calendar, Audit Trail view, and a Settings UI for `PhasePaths` (currently SQL-only - see §5 step 3) - see §9 for how this and the other open items are sequenced.
 
 ## 7. Future: Backup Strategy (not implemented - revisit before production)
 
@@ -192,3 +192,58 @@ Three-way backup, once a day, once implemented:
 3. **Cloud copy (OneDrive)** - the backup file also lands in a local folder that's synced by the Windows OneDrive client, so it's mirrored off-site automatically. Folder TBD when configured.
 
 All three run on the same daily schedule. None of this is implemented yet - no backup job, no scripts, no scheduled task exists in this repo today.
+
+## 8. Future: Final Data Management (post-GLB sorting into locked final folders)
+
+Not implemented - documented for later build, once user/assignment management (this repo's current focus) is settled. Triggered once a file's GLB stage is Complete, sitting in the GLB worker's Complete folder as `<FileName>/view/<FileName>-view01.glb, -view02.glb, ...` (view count varies per file, not fixed).
+
+**Sorted by Category/SubCategory only - Phase is not part of final sorting.** This is a deliberate split from the Polish->GLB->Render pipeline's own folder structure, which is per-worker/per-stage, not per-category.
+
+### Worked example, admin to final (confirmed end-to-end in conversation)
+
+1. **Admin's source pool holds loose files, no folder**: `Z:\Admin_Pending\kc20503.3dm`. There is no `kc20503\` folder here yet - it gets created later by the first-stage worker. This is a real, currently-unhandled gap: today's `assign_file_process` (`app/services/file_transfer.py`) uses `shutil.copytree`, which requires the source to already be a directory - it will raise on a loose file like this. Fixing that (wrap-into-folder on the first hop, or some other handling) is part of this future work, not solved yet.
+2. Admin assigns to Polish worker "Alice" - still a loose file in her Pending: `Z:\Polish\Alice\Pending\kc20503.3dm`.
+3. **Alice creates her own working folder herself** (a manual action, not app-automated) and moves the file in: `Z:\Polish\Alice\Pending\kc20503\kc20503.3dm`.
+4. Alice completes -> her Complete folder, folder structure now carried forward automatically by the existing Copy-Verify-Delete pipeline: `Z:\Polish\Alice\Complete\kc20503\kc20503.3dm` (+ any other Polish output files).
+5. Admin approves -> assigned to GLB worker "Bob" -> his Pending, same folder contents as Alice's Complete, no `view` folder yet: `Z:\GLB\Bob\Pending\kc20503\kc20503.3dm` (+ other files).
+6. **Bob creates the `view` folder himself** as part of his own GLB work, adding the view files on top of whatever he received:
+
+   ```text
+   Z:\GLB\Bob\Pending\kc20503\kc20503.3dm (+ other files)
+   Z:\GLB\Bob\Pending\kc20503\view\kc20503-view01.glb
+   Z:\GLB\Bob\Pending\kc20503\view\kc20503-view02.glb
+   Z:\GLB\Bob\Pending\kc20503\view\kc20503-view03.glb
+   ```
+
+7. Bob completes -> his Complete folder, same contents: `Z:\GLB\Bob\Complete\kc20503\...` (as above).
+
+### The four final folders
+
+Four destination roots, each defined once by an Admin and then **locked** - changing any of the four paths afterward requires re-entering the admin password (a re-auth gate beyond the normal admin session, not yet designed in schema/API terms):
+
+1. **All Design** - the true backup/final home for the complete worked folder (the whole `<FileName>/view/...` tree, untouched), filed under `Category/SubCategory/<FileName>/...`. This is a **move**, not a copy - the last step, once the other two copies below have succeeded.
+2. **GLB** (GLB-only backup) - same `Category/SubCategory` hierarchy, but **flattened**: no `/view/` subfolder. A folder named after the file (`<FileName>/`) holds the `.glb` files directly. The destination folder doesn't already exist (this is a selective copy, not a directory move) - it has to be created before the files are copied in.
+   - Example: source `Category1/SubCat5/ab20153/view/ab20153-view01.glb` -> `GLB/Category1/SubCat5/ab20153/ab20153-view01.glb`.
+3. **Render** (bulk-rendering staging) - same `Category/SubCategory` hierarchy, but **NOT per-file**. Every design in a SubCategory shares the same permanent, ever-growing `01/`, `02/`, `03/`, ... folders (one per view number), accumulating over time as each file finishes GLB - so a whole SubCategory's matching view-angle can be rendered in one batch. No filename collisions since each source filename already carries its own unique prefix.
+   - Example: `Vehicles/Cars` has two designs, `kc20503` and `kc50301`. After both finish GLB: `FinalRender\Vehicles\Cars\01\kc20503-view01.glb` and `FinalRender\Vehicles\Cars\01\kc50301-view01.glb` sit side by side in the same `01\` folder (and likewise for `02\`, `03\`).
+4. **Image** - left manual for now, no automation planned yet.
+
+### Sequencing - the crucial data-safety step
+
+Copy to **GLB** (Step A) and copy+re-sort to **Render** (Step B) happen first, independently, both derived from the same GLB-Complete source. **Only after both are copied AND verified** (file count/size check, same as the existing `_copy_verify_delete` pattern) does the original folder get **moved** (not copied) from the GLB worker's Complete folder into **All Design** (Step C) - and only then is the source in Bob's Complete folder deleted.
+
+**The rule that prevents data loss: the one-and-only source folder is never deleted until all three destinations (GLB, Render, All Design) have a verified copy sitting safely in place.** If anything fails or crashes partway through, the worst case is a partial/duplicate copy in GLB or Render - never a lost file, since the original is only removed as the very last step, after everything downstream is confirmed. This mirrors the existing Copy-Verify-Delete invariant in `app/services/file_transfer.py::_copy_verify_delete`, just chained across three destinations instead of one.
+
+### Open questions for when this gets designed for real
+
+- How to handle the loose-file admin source (see step 1 above) - whether the app should wrap it into a folder automatically on the first assign, or continue relying on the worker to do it manually.
+- Where the locked final-folder paths live (new admin-only settings table, `AppSettings`-style) and how the "admin password to change" re-auth gate should work.
+- Whether "which files are worked files for All Design" means everything under the GLB Complete folder as-is, or something more selective.
+- Failure/retry semantics now that one source fans out to two copies before the move, and Render's destination folder is shared/accumulating rather than fresh per file (more complex than the single-destination Copy-Verify-Delete every other transfer in this app uses).
+
+## 9. Roadmap - what's next, in order
+
+1. **Now / recently shipped**: the multi-stage Polish->GLB->Render assignment pipeline (assign/complete/approve/reject/reopen/fail, Copy-Verify-Delete throughout - §2), DB-wide + batch-wide duplicate detection on import, and the assignment-maintenance feature set (workload display, configurable thresholds, stale-assignment detection, file priority, worker availability toggle, worker leave).
+2. **Next**: Final Data Management (§8) - the GLB-Complete -> 4-final-folders sort. This is next because it's the next real gap in the production workflow itself (files reach GLB-Complete today with nowhere further to go), not an admin-convenience feature.
+3. **Then**: the smaller standing gaps - Reports, Calendar, Audit Trail view, and a Settings UI for `PhasePaths` (currently SQL-only - see §5 step 3).
+4. **Last, pre-production only**: Backup Strategy (§7) and the data-transfer/migration story - deliberately last since both are only relevant once the app is actually going live.

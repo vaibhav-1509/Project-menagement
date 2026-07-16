@@ -14,12 +14,19 @@ from app.security import require_admin
 router = APIRouter(prefix="/api/admin/settings", tags=["settings"])
 
 
+def _to_settings_out(settings) -> AppSettingsOut:
+    return AppSettingsOut(
+        lowWorkloadThreshold=settings.LowWorkloadThreshold,
+        staleAssignmentDays=settings.StaleAssignmentDays,
+        allPendingPath=settings.AllPendingPath,
+        adminPendingPath=settings.AdminPendingPath,
+        adminCompletePath=settings.AdminCompletePath,
+    )
+
+
 @router.get("", response_model=AppSettingsOut)
 def get_settings(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    settings = get_or_create_settings(db)
-    return AppSettingsOut(
-        lowWorkloadThreshold=settings.LowWorkloadThreshold, staleAssignmentDays=settings.StaleAssignmentDays
-    )
+    return _to_settings_out(get_or_create_settings(db))
 
 
 @router.put("", response_model=AppSettingsOut)
@@ -31,8 +38,9 @@ def update_settings(
     settings = get_or_create_settings(db)
     settings.LowWorkloadThreshold = payload.low_workload_threshold
     settings.StaleAssignmentDays = payload.stale_assignment_days
+    settings.AllPendingPath = payload.all_pending_path
+    settings.AdminPendingPath = payload.admin_pending_path
+    settings.AdminCompletePath = payload.admin_complete_path
     db.commit()
     db.refresh(settings)
-    return AppSettingsOut(
-        lowWorkloadThreshold=settings.LowWorkloadThreshold, staleAssignmentDays=settings.StaleAssignmentDays
-    )
+    return _to_settings_out(settings)

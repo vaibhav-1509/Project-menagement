@@ -13,7 +13,6 @@ breakdown charts the Reports page shows on screen, rendered server-side
 view it.
 """
 
-import calendar as calendar_module
 import io
 from datetime import date as date_cls, datetime, timedelta
 
@@ -34,34 +33,12 @@ from sqlalchemy.orm import Session
 
 from app.models import FileProcessStatus, FileRecord, FileStatus, ProcessType, TaskAssignment, User
 
-RANGE_CHOICES = ("day", "week", "month", "year")
-WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-
-def resolve_range(range_key: str, reference_date: date_cls) -> tuple[date_cls, date_cls, str]:
-    """Returns (start_date inclusive, end_date exclusive, human-readable label)."""
-    if range_key == "day":
-        return reference_date, reference_date + timedelta(days=1), reference_date.isoformat()
-    if range_key == "week":
-        monday = reference_date - timedelta(days=reference_date.weekday())
-        sunday = monday + timedelta(days=6)
-        return monday, monday + timedelta(days=7), f"Week of {monday.isoformat()} to {sunday.isoformat()}"
-    if range_key == "month":
-        start = reference_date.replace(day=1)
-        days_in_month = calendar_module.monthrange(start.year, start.month)[1]
-        return start, start + timedelta(days=days_in_month), start.strftime("%B %Y")
-    if range_key == "year":
-        start = date_cls(reference_date.year, 1, 1)
-        return start, date_cls(reference_date.year + 1, 1, 1), str(reference_date.year)
-    raise ValueError(f"Unknown range '{range_key}' - expected one of {RANGE_CHOICES}")
-
 
 def _complete_status_id(db: Session) -> int | None:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Complete"))
 
 
-def _detail_rows(db: Session, start: date_cls, end_exclusive: date_cls, user_id: int | None) -> list[dict]:
+def detail_rows(db: Session, start: date_cls, end_exclusive: date_cls, user_id: int | None) -> list[dict]:
     """One row per assignment attempt touching this range - either assigned or
     completed within it - so a file assigned before the range but finished
     inside it (or vice versa) still shows up with both of its real timestamps."""
@@ -138,28 +115,17 @@ def _completions_by_process_type(
     return list(counts.items())
 
 
-def _time_series(db: Session, range_key: str, start: date_cls, end_exclusive: date_cls, user_id: int | None) -> tuple[list[str], list[int]]:
-    """Buckets completions into labeled series matching the on-screen charts:
-    weekday names for a week, day-of-month for a month, month names for a year.
-    A single day has nothing meaningful to sub-bucket, so callers skip this."""
+def _time_series(db: Session, start: date_cls, end_inclusive: date_cls, user_id: int | None) -> tuple[list[str], list[int]]:
+    """One labeled bucket per day across the whole [start, end_inclusive]
+    range - the same generic daily shape the on-screen Reports page uses
+    (app/routers/reports.py::_daily_series), so the PDF's chart matches."""
     complete_id = _complete_status_id(db)
+    end_exclusive = end_inclusive + timedelta(days=1)
     day_counts = _completions_by_day(db, complete_id, start, end_exclusive, user_id)
 
-    if range_key == "week":
-        labels = WEEKDAY_LABELS
-        values = [day_counts.get(start + timedelta(days=i), 0) for i in range(7)]
-    elif range_key == "month":
-        days_in_month = (end_exclusive - start).days
-        labels = [str(d) for d in range(1, days_in_month + 1)]
-        values = [day_counts.get(start + timedelta(days=i), 0) for i in range(days_in_month)]
-    elif range_key == "year":
-        labels = MONTH_LABELS
-        values = []
-        for m in range(1, 13):
-            days_in_m = calendar_module.monthrange(start.year, m)[1]
-            values.append(sum(day_counts.get(date_cls(start.year, m, d), 0) for d in range(1, days_in_m + 1)))
-    else:
-        labels, values = [], []
+    days = (end_inclusive - start).days + 1
+    labels = [(start + timedelta(days=i)).strftime("%b %d") for i in range(days)]
+    values = [day_counts.get(start + timedelta(days=i), 0) for i in range(days)]
     return labels, values
 
 
@@ -167,9 +133,14 @@ def _scope_label(user_id: int | None, username: str | None) -> str:
     return f"User: {username}" if user_id is not None else "Scope: whole team"
 
 
-def build_excel_report(db: Session, user_id: int | None, username: str | None, range_key: str, reference_date: date_cls) -> tuple[bytes, str]:
-    start, end_exclusive, label = resolve_range(range_key, reference_date)
-    rows = _detail_rows(db, start, end_exclusive, user_id)
+def _range_label(start: date_cls, end_inclusive: date_cls) -> str:
+    return start.isoformat() if start == end_inclusive else f"{start.isoformat()}_to_{end_inclusive.isoformat()}"
+
+
+def build_excel_report(db: Session, user_id: int | None, username: str | None, start: date_cls, end_inclusive: date_cls) -> tuple[bytes, str]:
+    end_exclusive = end_inclusive + timedelta(days=1)
+    label = _range_label(start, end_inclusive)
+    rows = detail_rows(db, start, end_exclusive, user_id)
 
     wb = Workbook()
     ws = wb.active
@@ -240,13 +211,14 @@ def _pie_chart_png(breakdown: list[tuple[str, int]], title: str) -> bytes | None
     return buf.read()
 
 
-def build_pdf_report(db: Session, user_id: int | None, username: str | None, range_key: str, reference_date: date_cls) -> tuple[bytes, str]:
-    start, end_exclusive, label = resolve_range(range_key, reference_date)
-    rows = _detail_rows(db, start, end_exclusive, user_id)
+def build_pdf_report(db: Session, user_id: int | None, username: str | None, start: date_cls, end_inclusive: date_cls) -> tuple[bytes, str]:
+    end_exclusive = end_inclusive + timedelta(days=1)
+    label = _range_label(start, end_inclusive)
+    rows = detail_rows(db, start, end_exclusive, user_id)
     complete_id = _complete_status_id(db)
     process_breakdown = _completions_by_process_type(db, complete_id, start, end_exclusive, user_id)
     total_completions = sum(count for _, count in process_breakdown)
-    series_labels, series_values = _time_series(db, range_key, start, end_exclusive, user_id)
+    series_labels, series_values = _time_series(db, start, end_inclusive, user_id)
 
     styles = getSampleStyleSheet()
     story = [

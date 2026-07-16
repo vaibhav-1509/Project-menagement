@@ -353,6 +353,13 @@ export function getRepairsReport(params = {}) {
   return request(`/reports/repairs${qs ? `?${qs}` : ''}`)
 }
 
+export function getReportsDetail(params = {}) {
+  const qs = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  ).toString()
+  return request(`/reports/detail${qs ? `?${qs}` : ''}`)
+}
+
 export function getNotifications(limit = 30) {
   return request(`/notifications?limit=${limit}`)
 }
@@ -442,10 +449,16 @@ export function getSettings() {
   return request('/admin/settings')
 }
 
-export function updateSettings(lowWorkloadThreshold, staleAssignmentDays) {
+export function updateSettings(lowWorkloadThreshold, staleAssignmentDays, adminFolders = {}) {
   return request('/admin/settings', {
     method: 'PUT',
-    body: { low_workload_threshold: lowWorkloadThreshold, stale_assignment_days: staleAssignmentDays },
+    body: {
+      low_workload_threshold: lowWorkloadThreshold,
+      stale_assignment_days: staleAssignmentDays,
+      all_pending_path: adminFolders.allPendingPath ?? null,
+      admin_pending_path: adminFolders.adminPendingPath ?? null,
+      admin_complete_path: adminFolders.adminCompletePath ?? null,
+    },
   })
 }
 

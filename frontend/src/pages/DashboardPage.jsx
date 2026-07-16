@@ -120,7 +120,9 @@ export default function DashboardPage() {
   }
 
   async function handleFail(reason) {
-    await api.failAssignment(failTarget.myActiveAssignmentId, reason)
+    setWarning('')
+    const result = await api.failAssignment(failTarget.myActiveAssignmentId, reason)
+    if (result?.warning) setWarning(result.warning)
     await loadFiles(filters)
   }
 

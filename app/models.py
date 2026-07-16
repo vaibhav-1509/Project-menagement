@@ -267,6 +267,14 @@ class AppSettings(Base):
     AppSettingsID: Mapped[int] = mapped_column(Integer, primary_key=True)
     LowWorkloadThreshold: Mapped[int] = mapped_column(Integer, default=5)
     StaleAssignmentDays: Mapped[int] = mapped_column(Integer, default=3)
+    # The admin's own folder pair, same shape as a worker's WorkerProcessPath
+    # (one shared Pending + one shared Complete, not per-phase - admin plays
+    # the same role in the pipeline as any other worker), plus one extra
+    # folder for the raw, unregistered, loose-file intake pool that exists
+    # before anything is imported into the system at all.
+    AllPendingPath: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    AdminPendingPath: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    AdminCompletePath: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class UserLeave(Base):

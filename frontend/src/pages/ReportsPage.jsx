@@ -1,18 +1,26 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
-import WeekBarChart from '../components/reports/WeekBarChart'
 import MonthBarChart from '../components/reports/MonthBarChart'
 import ComparisonPieChart from '../components/reports/ComparisonPieChart'
 import TaxonomyCompletionPie from '../components/reports/TaxonomyCompletionPie'
+import WorkedFilesTable from '../components/reports/WorkedFilesTable'
 import { useAuth } from '../context/AuthContext'
 import * as api from '../api/client'
 
+function isoDaysAgo(days) {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
 export default function ReportsPage() {
   const { isAdmin } = useAuth()
-  const [referenceDate, setReferenceDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [startDate, setStartDate] = useState(() => isoDaysAgo(29))
+  const [endDate, setEndDate] = useState(() => isoDaysAgo(0))
   const [report, setReport] = useState(null)
   const [repairs, setRepairs] = useState(null)
   const [progress, setProgress] = useState(null)
+  const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -22,7 +30,6 @@ export default function ReportsPage() {
   const [users, setUsers] = useState([])
   const [selectedUserId, setSelectedUserId] = useState('') // admin-only: '' = whole team
 
-  const [exportRange, setExportRange] = useState('month')
   const [exporting, setExporting] = useState('') // '' | 'excel' | 'pdf'
   const [exportError, setExportError] = useState('')
 
@@ -33,6 +40,7 @@ export default function ReportsPage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
+      if (endDate < startDate) return
       setLoading(true)
       setError('')
       try {
@@ -42,17 +50,19 @@ export default function ReportsPage() {
         // specific worker, that worker's own progress replaces the org-wide
         // metric the same way it would if that worker viewed this page
         // themselves - Taxonomy Progress stays the org-wide view regardless.
-        const completionsParams = { reference_date: referenceDate }
-        if (isAdmin && selectedUserId) completionsParams.user_id = selectedUserId
-        const [reportData, repairsData, progressData] = await Promise.all([
-          api.getCompletionsReport(completionsParams),
-          api.getRepairsReport(completionsParams),
+        const rangeParams = { start_date: startDate, end_date: endDate }
+        if (isAdmin && selectedUserId) rangeParams.user_id = selectedUserId
+        const [reportData, repairsData, progressData, detailData] = await Promise.all([
+          api.getCompletionsReport(rangeParams),
+          api.getRepairsReport(rangeParams),
           isAdmin ? api.getTaxonomyProgressReport() : Promise.resolve(null),
+          api.getReportsDetail(rangeParams),
         ])
         if (cancelled) return
         setReport(reportData)
         setRepairs(repairsData)
         setProgress(progressData)
+        setDetail(detailData)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load reports')
       } finally {
@@ -63,7 +73,7 @@ export default function ReportsPage() {
     return () => {
       cancelled = true
     }
-  }, [referenceDate, selectedUserId, isAdmin])
+  }, [startDate, endDate, selectedUserId, isAdmin])
 
   const progressItems = progress ? progress[progressLevel] : []
   const selectedProgressItem = progressItems.find((i) => String(i.id) === String(progressNodeId)) || progressItems[0]
@@ -72,7 +82,7 @@ export default function ReportsPage() {
     setExportError('')
     setExporting(kind)
     try {
-      const params = { range: exportRange, reference_date: referenceDate }
+      const params = { start_date: startDate, end_date: endDate }
       if (isAdmin && selectedUserId) params.user_id = selectedUserId
       if (kind === 'excel') await api.exportReportExcel(params)
       else await api.exportReportPdf(params)
@@ -110,17 +120,12 @@ export default function ReportsPage() {
             </label>
           )}
           <label className="reports-date-picker">
-            Reference date
-            <input type="date" value={referenceDate} onChange={(e) => setReferenceDate(e.target.value)} />
+            Start date
+            <input type="date" value={startDate} max={endDate} onChange={(e) => setStartDate(e.target.value)} />
           </label>
-          <label>
-            Export range
-            <select value={exportRange} onChange={(e) => setExportRange(e.target.value)}>
-              <option value="day">Day</option>
-              <option value="week">Week</option>
-              <option value="month">Month</option>
-              <option value="year">Year</option>
-            </select>
+          <label className="reports-date-picker">
+            End date
+            <input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
           </label>
           <div className="reports-export-actions">
             <button
@@ -142,6 +147,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {endDate < startDate && <div className="error-banner">End date must not be before start date.</div>}
         {error && <div className="error-banner">{error}</div>}
         {exportError && <div className="error-banner">{exportError}</div>}
         {loading || !report ? (
@@ -150,54 +156,34 @@ export default function ReportsPage() {
           <>
             <div className="reports-stat-row">
               <div className="reports-stat-card">
-                <div className="stat-value">{report.totals.today}</div>
-                <div className="stat-label">Completed Today</div>
-              </div>
-              <div className="reports-stat-card">
-                <div className="stat-value">{report.totals.thisWeek}</div>
-                <div className="stat-label">This Week</div>
-              </div>
-              <div className="reports-stat-card">
-                <div className="stat-value">{report.totals.thisMonth}</div>
-                <div className="stat-label">This Month</div>
-              </div>
-              <div className="reports-stat-card">
-                <div className="stat-value">{report.totals.thisYear}</div>
-                <div className="stat-label">This Year</div>
+                <div className="stat-value">{report.totalInRange}</div>
+                <div className="stat-label">Completed in Range</div>
               </div>
               {repairs && (
                 <div className="reports-stat-card">
-                  <div className="stat-value">{repairs.totals.thisWeek}</div>
-                  <div className="stat-label">Repairs This Week</div>
+                  <div className="stat-value">{repairs.totalInRange}</div>
+                  <div className="stat-label">Repairs in Range</div>
                 </div>
               )}
             </div>
 
             <div className="reports-grid">
-              <div className="reports-panel">
-                <h3>This Week</h3>
-                <WeekBarChart data={report.week.days} />
+              <div className="reports-panel reports-panel-wide">
+                <h3>Completions - {report.startDate} to {report.endDate}</h3>
+                <MonthBarChart data={report.series} />
               </div>
               <div className="reports-panel">
-                <h3>This Month</h3>
-                <MonthBarChart data={report.month.days} />
+                <h3>vs. Previous Period</h3>
+                <ComparisonPieChart data={report.comparison} />
               </div>
               <div className="reports-panel">
-                <h3>Weekly Comparison</h3>
-                <ComparisonPieChart data={report.weekComparison} />
-              </div>
-              <div className="reports-panel">
-                <h3>Monthly Comparison</h3>
-                <ComparisonPieChart data={report.monthComparison} />
-              </div>
-              <div className="reports-panel">
-                <h3>This Year</h3>
-                <ComparisonPieChart data={report.year.months} />
+                <h3>By Process Type</h3>
+                <ComparisonPieChart data={report.processTypeBreakdown} />
               </div>
               {repairs && (
-                <div className="reports-panel">
-                  <h3>Repairs This Week</h3>
-                  <WeekBarChart data={repairs.week.days} />
+                <div className="reports-panel reports-panel-wide">
+                  <h3>Repairs - {repairs.startDate} to {repairs.endDate}</h3>
+                  <MonthBarChart data={repairs.series} />
                 </div>
               )}
 
@@ -225,6 +211,13 @@ export default function ReportsPage() {
                     </select>
                   </div>
                   <TaxonomyCompletionPie item={selectedProgressItem} />
+                </div>
+              )}
+
+              {detail && (
+                <div className="reports-panel reports-panel-wide">
+                  <h3>Worked Files - {startDate} to {endDate}</h3>
+                  <WorkedFilesTable rows={detail.rows} />
                 </div>
               )}
             </div>

@@ -272,11 +272,17 @@ GO
 
 -- Singleton row (AppSettingsID always 1) holding admin-adjustable knobs that
 -- don't belong to any single entity - the Workboard's low-workload and
--- stale-assignment thresholds.
+-- stale-assignment thresholds, plus the admin's own Pending/Complete folder
+-- pair (same shape as a worker's WorkerProcessPath - admin plays the same
+-- role as any other worker in the pipeline) and the raw, unregistered,
+-- loose-file intake pool folder that exists before anything is imported.
 CREATE TABLE AppSettings (
     AppSettingsID        INT NOT NULL PRIMARY KEY CHECK (AppSettingsID = 1),
     LowWorkloadThreshold INT NOT NULL DEFAULT 5,
-    StaleAssignmentDays  INT NOT NULL DEFAULT 3
+    StaleAssignmentDays  INT NOT NULL DEFAULT 3,
+    AllPendingPath       NVARCHAR(500) NULL,
+    AdminPendingPath     NVARCHAR(500) NULL,
+    AdminCompletePath    NVARCHAR(500) NULL
 );
 GO
 INSERT INTO AppSettings (AppSettingsID, LowWorkloadThreshold, StaleAssignmentDays) VALUES (1, 5, 3);

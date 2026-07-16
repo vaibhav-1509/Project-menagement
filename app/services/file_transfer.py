@@ -21,6 +21,15 @@ Callers that drive this pipeline:
   immediately re-enters the SAME stage with a fresh assignment - same worker
   by default, or a different eligible one - reusing assign_file_process's own
   transfer/validation mechanics via the shared _assign_stage helper.
+- mark_assignment_failed: a worker gives up mid-stage (never submitted).
+  Copies their in-progress folder from Pending into their own Complete
+  folder - the same real-world "put it in the tray" handoff as a normal
+  Complete - so that whichever admin action reassigns it next (same worker or
+  a different one, via a plain assign_file_process call once the stage's
+  ActiveAssignmentID is cleared) always sources the folder from Complete,
+  exactly like the reject flow above. No path in this module ever transfers
+  folder-to-folder between two different workers' Pending directories -
+  every handoff always passes through a Complete folder first.
 """
 
 import os
@@ -575,12 +584,17 @@ def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, c
     return TransferResult(assignment_id=last_assignment.AssignmentID, dest_path=dest_path, warning=warning)
 
 
-def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current_user: User) -> None:
-    """Worker (or admin) reports they could not finish this stage. No physical
-    file move - the folder stays exactly where it is, same 'no-op on disk'
-    rationale as reset_file. The reason is kept on both the historical
-    TaskAssignments row and the FileProcessStatus summary so whoever picks up
-    the reassignment can see what went wrong and who hit it."""
+def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current_user: User) -> TransferResult:
+    """Worker (or admin) reports they could not finish this stage. Same
+    Pending -> Complete handoff as complete_process_assignment (the worker's
+    real-world act of putting whatever they have into their Complete tray for
+    the admin to deal with), just landing on Failed instead of Submitted -
+    so reassignment (same worker or a different one, via the normal
+    assign_file_process flow once ActiveAssignmentID is cleared below) always
+    picks the folder up from the Complete folder, exactly like the reject
+    flow already does for admin-rejected work. The reason is kept on both the
+    historical TaskAssignments row and the FileProcessStatus summary so
+    whoever picks up the reassignment can see what went wrong and who hit it."""
     assignment = db.get(TaskAssignment, assignment_id)
     if assignment is None or not assignment.IsActive:
         raise ValueError("Active assignment not found")
@@ -589,12 +603,51 @@ def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current
     if not is_admin and assignment.AssignedToUserID != current_user.UserID:
         raise PermissionError("This assignment does not belong to you")
 
+    worker_path = db.scalar(
+        select(WorkerProcessPath).where(
+            WorkerProcessPath.UserID == assignment.AssignedToUserID,
+            WorkerProcessPath.ProcessTypeID == assignment.ProcessTypeID,
+        )
+    )
+    if worker_path is None:
+        raise ValueError("Worker's folder configuration for this process type is missing")
+
+    file_record = db.get(FileRecord, assignment.FileID)
+    source_path = file_record.CurrentPath
+    if not source_path:
+        raise ValueError("File has no known current location")
+    dest_path = os.path.join(worker_path.CompletePath, file_record.FileName)
+
     failed_id = _status_id(db, "Failed")
+
+    warning = None
+    if os.path.normpath(source_path) != os.path.normpath(dest_path):
+        try:
+            _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
+        except SourceNotFoundError:
+            # Same rationale as complete_process_assignment - someone likely
+            # already moved the file manually. Mark Failed for tracking
+            # purposes anyway, but flag that the physical file still needs a
+            # manual move into the Complete folder.
+            warning = (
+                f"Source folder not found at {source_path} - marked Failed, but the file was not "
+                f"copied. Please move it into {dest_path} manually."
+            )
+        except (FileLockedError, TransferVerificationError, OSError):
+            # Retryable - the assignment stays active, nothing reverted.
+            raise
+    else:
+        # Already sitting in this worker's Complete folder (e.g. failing again
+        # after a prior fail/reject cycle put it there) - nothing to move.
+        dest_path = source_path
+
     now = datetime.utcnow()
     assignment.StatusID = failed_id
     assignment.FailureReason = reason
     assignment.CompletionTS = now
     assignment.IsActive = False
+
+    file_record.CurrentPath = dest_path
 
     stage_status = db.scalar(
         select(FileProcessStatus).where(
@@ -608,3 +661,5 @@ def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current
         # AssignedToUserID is kept (not cleared) so the failing worker stays
         # visible to whoever reassigns this stage next.
     db.commit()
+
+    return TransferResult(assignment_id=assignment.AssignmentID, dest_path=dest_path, warning=warning)

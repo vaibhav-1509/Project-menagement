@@ -582,6 +582,19 @@ def _migrate_create_app_settings(cursor) -> None:
     print("AppSettings created and seeded.")
 
 
+def _migrate_add_app_settings_folders(cursor) -> None:
+    """The admin's own folder pair (Pending/Complete, same shape as a
+    worker's WorkerProcessPath - admin plays the same role as any other
+    worker in the pipeline), plus one extra folder for the raw,
+    unregistered, loose-file intake pool that exists before anything is
+    imported into the system at all."""
+    print("Adding AppSettings admin folder columns...")
+    cursor.execute("ALTER TABLE AppSettings ADD AllPendingPath NVARCHAR(500) NULL")
+    cursor.execute("ALTER TABLE AppSettings ADD AdminPendingPath NVARCHAR(500) NULL")
+    cursor.execute("ALTER TABLE AppSettings ADD AdminCompletePath NVARCHAR(500) NULL")
+    print("AppSettings admin folder columns added.")
+
+
 def _migrate_create_user_leave(cursor) -> None:
     """Full-history leave record - one row per requested date range, never
     mutated in place (mirrors TaskAssignments' append-only convention) so
@@ -648,6 +661,8 @@ def _run_migrations(cursor) -> None:
         _migrate_add_users_is_available(cursor)
     if not _table_exists(cursor, "AppSettings"):
         _migrate_create_app_settings(cursor)
+    if not _column_exists(cursor, "AppSettings", "AllPendingPath"):
+        _migrate_add_app_settings_folders(cursor)
     if not _table_exists(cursor, "UserLeave"):
         _migrate_create_user_leave(cursor)
     _migrate_fix_sp_create_first_admin(cursor)

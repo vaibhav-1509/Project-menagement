@@ -1,4 +1,3 @@
-import calendar as calendar_module
 from datetime import date as date_cls, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -19,21 +18,16 @@ from app.models import (
 )
 from app.schemas import (
     BucketCountOut,
-    MonthSeriesOut,
     ReportsCompletionsOut,
-    ReportsTotalsOut,
+    ReportsDetailOut,
+    ReportsDetailRowOut,
     TaxonomyProgressItemOut,
     TaxonomyProgressOut,
-    WeekSeriesOut,
-    YearSeriesOut,
 )
 from app.security import get_current_user, require_admin, user_is_admin
-from app.services.reports_export import RANGE_CHOICES, build_excel_report, build_pdf_report
+from app.services.reports_export import build_excel_report, build_pdf_report, detail_rows
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
-
-WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 def _final_process_type_id(db: Session) -> int | None:
@@ -115,101 +109,109 @@ def _repairs_by_day(
     return dict(db.execute(query).all())
 
 
-def _build_time_series(
-    ref: date_cls, day_counts: dict, compare_weeks: int, compare_months: int
+def _daily_series(day_counts: dict, start: date_cls, end_inclusive: date_cls) -> list[BucketCountOut]:
+    """One bucket per day across the whole [start, end_inclusive] range - the
+    single generic shape that replaced the old fixed week/month/year charts,
+    since those don't mean anything for an arbitrary custom range."""
+    days = (end_inclusive - start).days + 1
+    buckets = []
+    for i in range(days):
+        d = start + timedelta(days=i)
+        buckets.append(BucketCountOut(label=d.strftime("%b %d"), date=d.isoformat(), count=day_counts.get(d, 0)))
+    return buckets
+
+
+def _process_type_breakdown(
+    db: Session, status_id: int | None, start: date_cls, end_exclusive: date_cls, user_id: int | None, *, source
+) -> list[BucketCountOut]:
+    """Completions are sourced from FileProcessStatus, Repairs from
+    TaskAssignment - same split as _completions_by_day/_repairs_by_day above,
+    for the same reason (a reject never touches FileProcessStatus)."""
+    if status_id is None:
+        return []
+    query = (
+        select(ProcessType.ProcessTypeName, func.count())
+        .select_from(source)
+        .join(ProcessType, ProcessType.ProcessTypeID == source.ProcessTypeID)
+        .where(source.StatusID == status_id, source.CompletionTS >= start, source.CompletionTS < end_exclusive)
+        .group_by(ProcessType.ProcessTypeName)
+    )
+    if user_id is not None:
+        query = query.where(source.AssignedToUserID == user_id)
+    return [BucketCountOut(label=name, count=count) for name, count in db.execute(query).all()]
+
+
+def _previous_period(start: date_cls, end_inclusive: date_cls) -> tuple[date_cls, date_cls]:
+    """The immediately-preceding period of equal length, for the comparison
+    bucket - e.g. selecting Jan 8-14 compares against Jan 1-7."""
+    period_len = (end_inclusive - start).days + 1
+    prev_end_inclusive = start - timedelta(days=1)
+    prev_start = prev_end_inclusive - timedelta(days=period_len - 1)
+    return prev_start, prev_end_inclusive
+
+
+def _build_range_report(
+    start: date_cls,
+    end_inclusive: date_cls,
+    day_counts: dict,
+    prev_total: int,
+    breakdown: list[BucketCountOut],
 ) -> ReportsCompletionsOut:
-    """Shared week/month/year/comparison bucketing - identical shape for both
-    /completions and /repairs, only the underlying day_counts source differs."""
+    """Shared response shape for /completions and /repairs - a daily series
+    across the chosen range, a 2-bucket comparison against the immediately
+    preceding period of equal length, and a process-type breakdown."""
+    series = _daily_series(day_counts, start, end_inclusive)
+    total_in_range = sum(b.count for b in series)
+    prev_start, _prev_end = _previous_period(start, end_inclusive)
 
-    def count_on(d: date_cls) -> int:
-        return day_counts.get(d, 0)
-
-    monday = ref - timedelta(days=ref.weekday())
-    week_dates = [monday + timedelta(days=i) for i in range(7)]
-    week = WeekSeriesOut(
-        days=[
-            BucketCountOut(label=WEEKDAY_LABELS[i], date=d.isoformat(), count=count_on(d))
-            for i, d in enumerate(week_dates)
-        ]
-    )
-
-    days_in_month = calendar_module.monthrange(ref.year, ref.month)[1]
-    month_dates = [date_cls(ref.year, ref.month, day_num) for day_num in range(1, days_in_month + 1)]
-    month = MonthSeriesOut(
-        days=[BucketCountOut(label=str(d.day), date=d.isoformat(), count=count_on(d)) for d in month_dates]
-    )
-
-    year_months = []
-    for m in range(1, 13):
-        days_in_m = calendar_module.monthrange(ref.year, m)[1]
-        total = sum(count_on(date_cls(ref.year, m, d)) for d in range(1, days_in_m + 1))
-        year_months.append(BucketCountOut(label=MONTH_LABELS[m - 1], date=f"{ref.year}-{m:02d}", count=total))
-    year = YearSeriesOut(months=year_months)
-
-    week_comparison = []
-    for i in range(compare_weeks - 1, -1, -1):
-        week_monday = monday - timedelta(days=7 * i)
-        total = sum(count_on(week_monday + timedelta(days=d)) for d in range(7))
-        label = f"{week_monday.strftime('%b %d')}" if i > 0 else "This week"
-        week_comparison.append(BucketCountOut(label=label, date=week_monday.isoformat(), count=total))
-
-    month_comparison = []
-    for i in range(compare_months - 1, -1, -1):
-        m_year, m_month = ref.year, ref.month - i
-        while m_month < 1:
-            m_month += 12
-            m_year -= 1
-        days_in_m = calendar_module.monthrange(m_year, m_month)[1]
-        total = sum(count_on(date_cls(m_year, m_month, d)) for d in range(1, days_in_m + 1))
-        label = f"{MONTH_LABELS[m_month - 1]} {m_year}" if i > 0 else "This month"
-        month_comparison.append(BucketCountOut(label=label, date=f"{m_year}-{m_month:02d}", count=total))
-
-    totals = ReportsTotalsOut(
-        today=count_on(ref),
-        thisWeek=sum(b.count for b in week.days),
-        thisMonth=sum(b.count for b in month.days),
-        thisYear=sum(b.count for b in year.months),
-    )
+    comparison = [
+        BucketCountOut(label="Previous period", date=prev_start.isoformat(), count=prev_total),
+        BucketCountOut(label="Selected range", date=start.isoformat(), count=total_in_range),
+    ]
 
     return ReportsCompletionsOut(
-        referenceDate=ref.isoformat(),
-        totals=totals,
-        week=week,
-        month=month,
-        year=year,
-        weekComparison=week_comparison,
-        monthComparison=month_comparison,
+        startDate=start.isoformat(),
+        endDate=end_inclusive.isoformat(),
+        totalInRange=total_in_range,
+        series=series,
+        comparison=comparison,
+        processTypeBreakdown=breakdown,
     )
+
+
+def _parse_range(start_date: str, end_date: str) -> tuple[date_cls, date_cls]:
+    start = date_cls.fromisoformat(start_date)
+    end_inclusive = date_cls.fromisoformat(end_date)
+    if end_inclusive < start:
+        raise HTTPException(status_code=400, detail="end_date must not be before start_date")
+    return start, end_inclusive
 
 
 @router.get("/completions", response_model=ReportsCompletionsOut)
 def get_completions(
-    reference_date: str | None = None,
-    compare_weeks: int = 4,
-    compare_months: int = 6,
+    start_date: str,
+    end_date: str,
     user_id: int | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    start, end_inclusive = _parse_range(start_date, end_date)
+    end_exclusive = end_inclusive + timedelta(days=1)
     complete_id = _complete_status_id(db)
     scoped_user_id = _scope_user_id(current_user, user_id)
 
-    # One grouped query wide enough to cover the year view plus both
-    # comparison windows, instead of several overlapping range queries.
-    window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
-    window_start = ref - timedelta(days=window_days)
-    window_end_exclusive = ref + timedelta(days=1)
-    day_counts = _completions_by_day(db, complete_id, window_start, window_end_exclusive, scoped_user_id)
+    day_counts = _completions_by_day(db, complete_id, start, end_exclusive, scoped_user_id)
+    prev_start, prev_end_inclusive = _previous_period(start, end_inclusive)
+    prev_day_counts = _completions_by_day(db, complete_id, prev_start, prev_end_inclusive + timedelta(days=1), scoped_user_id)
+    breakdown = _process_type_breakdown(db, complete_id, start, end_exclusive, scoped_user_id, source=FileProcessStatus)
 
-    return _build_time_series(ref, day_counts, compare_weeks, compare_months)
+    return _build_range_report(start, end_inclusive, day_counts, sum(prev_day_counts.values()), breakdown)
 
 
 @router.get("/repairs", response_model=ReportsCompletionsOut)
 def get_repairs(
-    reference_date: str | None = None,
-    compare_weeks: int = 4,
-    compare_months: int = 6,
+    start_date: str,
+    end_date: str,
     user_id: int | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -217,16 +219,17 @@ def get_repairs(
     """Sibling of /completions tracking admin-rejected ('Repair') attempts
     instead of Complete ones - same shape, same scoping rule, so the
     frontend can render it with the exact same chart components."""
-    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
+    start, end_inclusive = _parse_range(start_date, end_date)
+    end_exclusive = end_inclusive + timedelta(days=1)
     repair_id = _repair_status_id(db)
     scoped_user_id = _scope_user_id(current_user, user_id)
 
-    window_days = max(400, compare_months * 31 + 31, compare_weeks * 7 + 7)
-    window_start = ref - timedelta(days=window_days)
-    window_end_exclusive = ref + timedelta(days=1)
-    day_counts = _repairs_by_day(db, repair_id, window_start, window_end_exclusive, scoped_user_id)
+    day_counts = _repairs_by_day(db, repair_id, start, end_exclusive, scoped_user_id)
+    prev_start, prev_end_inclusive = _previous_period(start, end_inclusive)
+    prev_day_counts = _repairs_by_day(db, repair_id, prev_start, prev_end_inclusive + timedelta(days=1), scoped_user_id)
+    breakdown = _process_type_breakdown(db, repair_id, start, end_exclusive, scoped_user_id, source=TaskAssignment)
 
-    return _build_time_series(ref, day_counts, compare_weeks, compare_months)
+    return _build_range_report(start, end_inclusive, day_counts, sum(prev_day_counts.values()), breakdown)
 
 
 def _progress_items(id_to_name: dict, id_to_total: dict, id_to_completed: dict) -> list[TaxonomyProgressItemOut]:
@@ -327,9 +330,7 @@ def _safe_filename_part(label: str) -> str:
     return "".join(c if c.isalnum() or c in "-_" else "_" for c in label)
 
 
-def _resolve_export_target(db: Session, current_user: User, range_key: str, user_id: int | None) -> tuple[int | None, str | None]:
-    if range_key not in RANGE_CHOICES:
-        raise HTTPException(status_code=400, detail=f"range must be one of {', '.join(RANGE_CHOICES)}")
+def _resolve_export_target(db: Session, current_user: User, user_id: int | None) -> tuple[int | None, str | None]:
     scoped_user_id = _scope_user_id(current_user, user_id)
     username = None
     if scoped_user_id is not None:
@@ -342,19 +343,20 @@ def _resolve_export_target(db: Session, current_user: User, range_key: str, user
 
 @router.get("/export/excel")
 def export_excel(
-    range: str = "month",
-    reference_date: str | None = None,
+    start_date: str,
+    end_date: str,
     user_id: int | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Flat, filterable ledger for the selected range/user - one row per
     process-stage attempt with both its Assigned and Completion timestamp
-    (see reports_export.py's _detail_rows)."""
-    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
-    scoped_user_id, username = _resolve_export_target(db, current_user, range, user_id)
+    (see reports_export.py's detail_rows). Always exports exactly the range
+    shown on screen - no separate range control."""
+    start, end_inclusive = _parse_range(start_date, end_date)
+    scoped_user_id, username = _resolve_export_target(db, current_user, user_id)
 
-    content, label = build_excel_report(db, scoped_user_id, username, range, ref)
+    content, label = build_excel_report(db, scoped_user_id, username, start, end_inclusive)
     filename = f"completions_{_safe_filename_part(label)}.xlsx"
     return Response(
         content=content,
@@ -365,8 +367,8 @@ def export_excel(
 
 @router.get("/export/pdf")
 def export_pdf(
-    range: str = "month",
-    reference_date: str | None = None,
+    start_date: str,
+    end_date: str,
     user_id: int | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -374,13 +376,66 @@ def export_pdf(
     """Self-contained PDF snapshot for the selected range/user - the same
     completions-over-time and per-process-type charts the Reports page shows
     on screen (rendered server-side), plus the full activity ledger."""
-    ref = date_cls.fromisoformat(reference_date) if reference_date else date_cls.today()
-    scoped_user_id, username = _resolve_export_target(db, current_user, range, user_id)
+    start, end_inclusive = _parse_range(start_date, end_date)
+    scoped_user_id, username = _resolve_export_target(db, current_user, user_id)
 
-    content, label = build_pdf_report(db, scoped_user_id, username, range, ref)
+    content, label = build_pdf_report(db, scoped_user_id, username, start, end_inclusive)
     filename = f"completions_{_safe_filename_part(label)}.pdf"
     return Response(
         content=content,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/detail", response_model=ReportsDetailOut)
+def get_detail(
+    start_date: str,
+    end_date: str,
+    user_id: int | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Worked-files ledger for the on-screen Reports page - one row per
+    assignment attempt in the range, same data source as the Excel/PDF
+    exports (reports_export.py::detail_rows). Rows left at Repair (not
+    approved) get a reassignedTo - the very next assignment for that same
+    file+process-type after this attempt (same worker or a different one,
+    whichever actually happened)."""
+    start, end_inclusive = _parse_range(start_date, end_date)
+    end_exclusive = end_inclusive + timedelta(days=1)
+    scoped_user_id = _scope_user_id(current_user, user_id)
+
+    rows = detail_rows(db, start, end_exclusive, scoped_user_id)
+
+    # Next-assignment lookup needs the full history per (file, process type),
+    # not just what's in this range - a Repair row near the end of the range
+    # may have been reassigned only after it closed.
+    all_rows = detail_rows(db, date_cls.min, end_exclusive, None)
+    next_by_key: dict[tuple[str, str], list[dict]] = {}
+    for r in all_rows:
+        next_by_key.setdefault((r["file_name"], r["process_type"]), []).append(r)
+    for bucket in next_by_key.values():
+        bucket.sort(key=lambda r: r["assigned_ts"] or date_cls.min)
+
+    def reassigned_to(row: dict) -> str | None:
+        if row["status"] != "Repair":
+            return None
+        bucket = next_by_key.get((row["file_name"], row["process_type"]), [])
+        later = [r for r in bucket if r["assigned_ts"] and row["assigned_ts"] and r["assigned_ts"] > row["assigned_ts"]]
+        return later[0]["assigned_to"] if later else None
+
+    return ReportsDetailOut(
+        rows=[
+            ReportsDetailRowOut(
+                fileName=r["file_name"],
+                processType=r["process_type"],
+                assignedTo=r["assigned_to"],
+                status=r["status"],
+                assignedTs=r["assigned_ts"],
+                completionTs=r["completion_ts"],
+                reassignedTo=reassigned_to(r),
+            )
+            for r in rows
+        ]
     )
