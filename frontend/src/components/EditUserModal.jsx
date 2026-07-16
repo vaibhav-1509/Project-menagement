@@ -12,9 +12,18 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [pathsByType, setPathsByType] = useState({})
+  // A worker has exactly ONE Pending folder and ONE Complete folder, shared
+  // across every process type they're enabled for - not a separate folder
+  // pair per type. Enabling Polish+GLB for a worker means both stages' files
+  // flow through the same two folders; the per-process-type row in
+  // WorkerProcessPaths still exists in the database (so SourcePath/DestPath
+  // are still tracked per assignment), it just always gets the same pair of
+  // paths written to it here instead of the admin re-typing them per type.
+  const [sharedPendingPath, setSharedPendingPath] = useState('')
+  const [sharedCompletePath, setSharedCompletePath] = useState('')
+  const [enabledTypeIds, setEnabledTypeIds] = useState([])
   const [pathsLoading, setPathsLoading] = useState(true)
-  const [browserTarget, setBrowserTarget] = useState(null) // { processTypeId, field: 'pending' | 'complete' }
+  const [browserField, setBrowserField] = useState(null) // 'pending' | 'complete'
 
   const [leave, setLeave] = useState([])
   const [leaveLoading, setLeaveLoading] = useState(true)
@@ -82,11 +91,15 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
       .getWorkerProcessPaths(user.UserID)
       .then((rows) => {
         if (cancelled) return
-        const byType = {}
-        rows.forEach((r) => {
-          byType[r.processTypeId] = { enabled: r.isActive, pendingPath: r.pendingPath, completePath: r.completePath }
-        })
-        setPathsByType(byType)
+        setEnabledTypeIds(rows.filter((r) => r.isActive).map((r) => r.processTypeId))
+        // Pre-fill the shared fields from whatever was configured before
+        // (any row, even a disabled one) - once saved through this form
+        // every enabled type is written with the same pair going forward.
+        const withPaths = rows.find((r) => r.pendingPath && r.completePath)
+        if (withPaths) {
+          setSharedPendingPath(withPaths.pendingPath)
+          setSharedCompletePath(withPaths.completePath)
+        }
       })
       .catch((err) => setError(err.message || 'Failed to load worker paths'))
       .finally(() => !cancelled && setPathsLoading(false))
@@ -96,16 +109,10 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function updatePath(processTypeId, field, value) {
-    setPathsByType({
-      ...pathsByType,
-      [processTypeId]: { enabled: true, pendingPath: '', completePath: '', ...pathsByType[processTypeId], [field]: value },
-    })
-  }
-
   function toggleEnabled(processTypeId) {
-    const current = pathsByType[processTypeId] || { pendingPath: '', completePath: '' }
-    setPathsByType({ ...pathsByType, [processTypeId]: { ...current, enabled: !current.enabled } })
+    setEnabledTypeIds((prev) =>
+      prev.includes(processTypeId) ? prev.filter((id) => id !== processTypeId) : [...prev, processTypeId]
+    )
   }
 
   async function handleSubmit(e) {
@@ -115,20 +122,22 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
       setError('Select at least one role')
       return
     }
-    const entries = []
-    for (const pt of lookups.processTypes) {
-      const entry = pathsByType[pt.id]
-      if (!entry?.enabled) continue
-      if (!entry.pendingPath || !entry.completePath) {
-        setError(`Pick both a Pending and a Complete folder for ${pt.name}`)
+    let entries = []
+    if (enabledTypeIds.length > 0) {
+      if (!sharedPendingPath || !sharedCompletePath) {
+        setError('Pick both a Pending and a Complete folder')
         return
       }
-      entries.push({
-        process_type_id: pt.id,
-        pending_path: entry.pendingPath,
-        complete_path: entry.completePath,
+      if (sharedPendingPath.trim().toLowerCase() === sharedCompletePath.trim().toLowerCase()) {
+        setError('Pending and Complete folders must be different')
+        return
+      }
+      entries = enabledTypeIds.map((processTypeId) => ({
+        process_type_id: processTypeId,
+        pending_path: sharedPendingPath,
+        complete_path: sharedCompletePath,
         is_active: true,
-      })
+      }))
     }
 
     setLoading(true)
@@ -221,57 +230,50 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
 
         {hasWorkerRole && (
           <div className="move-section">
-            <h3>Process Type Paths</h3>
+            <h3>Pending / Complete Folders</h3>
             <p className="hint">
-              Enable the stages this worker can be assigned, with a Pending and Complete folder for each. Both
-              are required before they can be assigned any work of that type.
+              One Pending folder and one Complete folder for this worker, shared across every stage they're
+              enabled for below - not a separate pair per stage.
             </p>
             {pathsLoading ? (
               <div className="loading">Loading...</div>
             ) : (
-              lookups.processTypes.map((pt) => {
-                const entry = pathsByType[pt.id] || { enabled: false, pendingPath: '', completePath: '' }
-                return (
-                  <div key={pt.id} className="worker-path-row">
-                    <label className="checkbox-row worker-path-toggle">
-                      <input type="checkbox" checked={!!entry.enabled} onChange={() => toggleEnabled(pt.id)} />
+              <>
+                <div className="path-input-row">
+                  <input
+                    value={sharedPendingPath}
+                    onChange={(e) => setSharedPendingPath(e.target.value)}
+                    placeholder="Pending folder"
+                  />
+                  <button type="button" className="secondary" onClick={() => setBrowserField('pending')}>
+                    Choose...
+                  </button>
+                </div>
+                <div className="path-input-row">
+                  <input
+                    value={sharedCompletePath}
+                    onChange={(e) => setSharedCompletePath(e.target.value)}
+                    placeholder="Complete folder"
+                  />
+                  <button type="button" className="secondary" onClick={() => setBrowserField('complete')}>
+                    Choose...
+                  </button>
+                </div>
+
+                <p className="hint">Enabled for:</p>
+                <div className="worker-type-checkboxes">
+                  {lookups.processTypes.map((pt) => (
+                    <label key={pt.id} className="checkbox-row worker-path-toggle">
+                      <input
+                        type="checkbox"
+                        checked={enabledTypeIds.includes(pt.id)}
+                        onChange={() => toggleEnabled(pt.id)}
+                      />
                       {pt.name}
                     </label>
-                    {entry.enabled && (
-                      <div className="worker-path-fields">
-                        <div className="path-input-row">
-                          <input
-                            value={entry.pendingPath}
-                            onChange={(e) => updatePath(pt.id, 'pendingPath', e.target.value)}
-                            placeholder="Pending folder"
-                          />
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => setBrowserTarget({ processTypeId: pt.id, field: 'pendingPath' })}
-                          >
-                            Choose...
-                          </button>
-                        </div>
-                        <div className="path-input-row">
-                          <input
-                            value={entry.completePath}
-                            onChange={(e) => updatePath(pt.id, 'completePath', e.target.value)}
-                            placeholder="Complete folder"
-                          />
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => setBrowserTarget({ processTypeId: pt.id, field: 'completePath' })}
-                          >
-                            Choose...
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -287,13 +289,14 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
         </div>
       </form>
 
-      {browserTarget && (
+      {browserField && (
         <FolderBrowserModal
-          startPath={pathsByType[browserTarget.processTypeId]?.[browserTarget.field] || ''}
-          onClose={() => setBrowserTarget(null)}
+          startPath={browserField === 'pending' ? sharedPendingPath : sharedCompletePath}
+          onClose={() => setBrowserField(null)}
           onSelect={(path) => {
-            updatePath(browserTarget.processTypeId, browserTarget.field, path)
-            setBrowserTarget(null)
+            if (browserField === 'pending') setSharedPendingPath(path)
+            else setSharedCompletePath(path)
+            setBrowserField(null)
           }}
         />
       )}

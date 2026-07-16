@@ -180,3 +180,15 @@ Every other Category consumer is phase-aware: `FilterBar.jsx`'s category dropdow
 Verified end-to-end against a live SQL Server, both as a single process (`app/main.py` serving `frontend/dist`, including the SPA-fallback and path-traversal guard on the catch-all route) and via the dev proxy: login → dashboard (role-scoped) → CSV import (preview + commit, both full and manual mode) → move-category → move-phase (including the active-assignment skip and the duplicate-name collision skip) → add/deactivate/reactivate/delete Phase/Category/Sub-Category → delete blocked while in use (files, users, categories, or PhasePaths, depending on level) → same category name reused across two phases → Assign (real Copy-Verify-Delete folder move) → Complete (artist) → Reset (admin) → create/edit/deactivate a user → last-admin protection → self-service password change, all through the same HTTP calls the React app makes.
 
 Not built yet: Reports, Calendar, Audit Trail view, and a Settings UI for `PhasePaths` (currently SQL-only - see §5 step 3).
+
+## 7. Future: Backup Strategy (not implemented - revisit before production)
+
+Deliberately deferred - to be designed and configured once the app is ready to go live, not before. Also revisit the data-transfer/migration story at the same time (moving the live database to a new server/environment).
+
+Three-way backup, once a day, once implemented:
+
+1. **SQL-native backup** - a native SQL Server `BACKUP DATABASE` job, restorable directly within SQL Server for fast recovery from corruption or accidental data loss, without needing the other two copies.
+2. **NAS / SMB server copy** - the backup file also lands on the internal NAS/SMB share. Folder path TBD when configured.
+3. **Cloud copy (OneDrive)** - the backup file also lands in a local folder that's synced by the Windows OneDrive client, so it's mirrored off-site automatically. Folder TBD when configured.
+
+All three run on the same daily schedule. None of this is implemented yet - no backup job, no scripts, no scheduled task exists in this repo today.

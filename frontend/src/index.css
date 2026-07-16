@@ -989,23 +989,14 @@ textarea {
   padding: 3px 8px 3px 26px;
 }
 
-.worker-path-row {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .worker-path-toggle {
   font-weight: 500;
 }
 
-.worker-path-fields {
+.worker-type-checkboxes {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .process-type-order {
