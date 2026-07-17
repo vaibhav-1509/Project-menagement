@@ -111,14 +111,23 @@ def _repairs_by_day(
 
 def _daily_series(day_counts: dict, start: date_cls, end_inclusive: date_cls) -> list[BucketCountOut]:
     """One bucket per day across the whole [start, end_inclusive] range - the
-    single generic shape that replaced the old fixed week/month/year charts,
-    since those don't mean anything for an arbitrary custom range."""
+    Report View always shows the exact range, never a fixed week/month/year
+    shape around a single reference point."""
     days = (end_inclusive - start).days + 1
     buckets = []
     for i in range(days):
         d = start + timedelta(days=i)
         buckets.append(BucketCountOut(label=d.strftime("%b %d"), date=d.isoformat(), count=day_counts.get(d, 0)))
     return buckets
+
+
+def _previous_period(start: date_cls, end_inclusive: date_cls) -> tuple[date_cls, date_cls]:
+    """The immediately-preceding period of equal length, for the comparison
+    bucket - e.g. selecting Jan 8-14 compares against Jan 1-7."""
+    period_len = (end_inclusive - start).days + 1
+    prev_end_inclusive = start - timedelta(days=1)
+    prev_start = prev_end_inclusive - timedelta(days=period_len - 1)
+    return prev_start, prev_end_inclusive
 
 
 def _process_type_breakdown(
@@ -139,15 +148,6 @@ def _process_type_breakdown(
     if user_id is not None:
         query = query.where(source.AssignedToUserID == user_id)
     return [BucketCountOut(label=name, count=count) for name, count in db.execute(query).all()]
-
-
-def _previous_period(start: date_cls, end_inclusive: date_cls) -> tuple[date_cls, date_cls]:
-    """The immediately-preceding period of equal length, for the comparison
-    bucket - e.g. selecting Jan 8-14 compares against Jan 1-7."""
-    period_len = (end_inclusive - start).days + 1
-    prev_end_inclusive = start - timedelta(days=1)
-    prev_start = prev_end_inclusive - timedelta(days=period_len - 1)
-    return prev_start, prev_end_inclusive
 
 
 def _build_range_report(
@@ -351,8 +351,9 @@ def export_excel(
 ):
     """Flat, filterable ledger for the selected range/user - one row per
     process-stage attempt with both its Assigned and Completion timestamp
-    (see reports_export.py's detail_rows). Always exports exactly the range
-    shown on screen - no separate range control."""
+    (see reports_export.py's detail_rows). The Export popup computes
+    start_date/end_date from whichever preset or custom range it used -
+    always exactly what was picked there, independent of the Report View."""
     start, end_inclusive = _parse_range(start_date, end_date)
     scoped_user_id, username = _resolve_export_target(db, current_user, user_id)
 
@@ -396,10 +397,12 @@ def get_detail(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Worked-files ledger for the on-screen Reports page - one row per
-    assignment attempt in the range, same data source as the Excel/PDF
-    exports (reports_export.py::detail_rows). Rows left at Repair (not
-    approved) get a reassignedTo - the very next assignment for that same
+    """Worked-files ledger for the Report View's Worked Files panel - shares
+    the same start_date/end_date range as /completions and /repairs (one
+    calendar range drives the whole page). One row per assignment attempt in
+    the range, same data source as the Excel/PDF exports
+    (reports_export.py::detail_rows). Rows left at Repair (not approved) get
+    a reassignedTo - the very next assignment for that same
     file+process-type after this attempt (same worker or a different one,
     whichever actually happened)."""
     start, end_inclusive = _parse_range(start_date, end_date)

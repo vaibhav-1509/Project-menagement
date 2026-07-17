@@ -564,6 +564,16 @@ textarea {
   color: var(--warning);
 }
 
+.status-pill.file-active {
+  background: rgba(0, 176, 80, 0.14);
+  color: #00b050;
+}
+
+.status-pill.file-inactive {
+  background: rgba(255, 0, 0, 0.14);
+  color: #ff0000;
+}
+
 .status-pill.priority-low {
   background: rgba(216, 214, 224, 0.08);
   color: var(--text);
@@ -775,18 +785,23 @@ textarea {
 
 /* ---------- Reports ---------- */
 
-.reports-date-picker {
-  margin-left: auto;
-  flex-direction: row !important;
-  align-items: center;
-  gap: 8px !important;
-  font-size: 13px;
+.reports-page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
 }
 
-.reports-export-actions {
+.reports-header-row {
   display: flex;
-  gap: 6px;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reports-export-btn {
+  align-self: flex-start;
 }
 
 .reports-stat-row {
@@ -837,6 +852,208 @@ textarea {
 
 .reports-panel-wide {
   grid-column: 1 / -1;
+}
+
+.reports-panel-2col {
+  grid-column: span 2;
+}
+
+/* ---------- Date range calendar ---------- */
+
+.date-range-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.date-range-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-h);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.date-range-trigger:hover {
+  background: var(--border);
+}
+
+.date-range-trigger-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.date-range-calendar {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: fit-content;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.date-range-calendar-inline {
+  position: static;
+  box-shadow: none;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.cal-header-label {
+  display: flex;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.cal-header-btn {
+  background: none;
+  border: none;
+  color: var(--text-h);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.cal-header-btn:hover {
+  background: var(--border);
+}
+
+.cal-nav {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cal-nav:hover {
+  background: var(--border);
+}
+
+.cal-weekdays,
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 28px);
+  gap: 2px;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.6;
+  padding: 2px 0;
+}
+
+.cal-day {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.cal-day:hover {
+  background: var(--border);
+}
+
+.cal-day-blank {
+  cursor: default;
+}
+
+.cal-day-today {
+  outline: 1px solid var(--accent);
+}
+
+.cal-day-selected {
+  background: var(--accent);
+  color: #fff;
+}
+
+.cal-day-in-range {
+  background: rgba(138, 114, 255, 0.25);
+  border-radius: 0;
+}
+
+.cal-months,
+.cal-years {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 196px;
+}
+
+.cal-month,
+.cal-year {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.cal-month:hover,
+.cal-year:hover {
+  background: var(--border);
+}
+
+.cal-month-selected,
+.cal-year-selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.cal-range-summary {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ---------- Export report modal ---------- */
+
+.export-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.export-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.export-preset-active {
+  border-color: var(--accent) !important;
+  color: var(--text-h) !important;
 }
 
 .settings-form {

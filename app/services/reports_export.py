@@ -117,7 +117,7 @@ def _completions_by_process_type(
 
 def _time_series(db: Session, start: date_cls, end_inclusive: date_cls, user_id: int | None) -> tuple[list[str], list[int]]:
     """One labeled bucket per day across the whole [start, end_inclusive]
-    range - the same generic daily shape the on-screen Reports page uses
+    range - the same generic daily shape the Report View uses
     (app/routers/reports.py::_daily_series), so the PDF's chart matches."""
     complete_id = _complete_status_id(db)
     end_exclusive = end_inclusive + timedelta(days=1)

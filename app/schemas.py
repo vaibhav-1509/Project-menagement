@@ -235,8 +235,9 @@ class ReportsCompletionsOut(BaseModel):
     """Everything needed to render one custom [startDate, endDate] range:
     a daily bar series across the whole range, a 2-bucket comparison against
     the immediately-preceding period of equal length, and a breakdown by
-    process type - replaces the old fixed week/month/year-around-a-single-
-    reference-date shape entirely."""
+    process type. Deliberate final design (see planning discussion) - the
+    Report View always shows the exact selected range, not a fixed
+    week/month/year around a single reference point."""
 
     startDate: str
     endDate: str

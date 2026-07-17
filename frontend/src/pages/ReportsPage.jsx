@@ -1,22 +1,32 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
+import DateRangeCalendar from '../components/DateRangeCalendar'
 import MonthBarChart from '../components/reports/MonthBarChart'
 import ComparisonPieChart from '../components/reports/ComparisonPieChart'
 import TaxonomyCompletionPie from '../components/reports/TaxonomyCompletionPie'
 import WorkedFilesTable from '../components/reports/WorkedFilesTable'
+import ExportReportModal from '../components/reports/ExportReportModal'
 import { useAuth } from '../context/AuthContext'
 import * as api from '../api/client'
 
-function isoDaysAgo(days) {
-  const d = new Date()
-  d.setDate(d.getDate() - days)
+function isoDate(d) {
   return d.toISOString().slice(0, 10)
+}
+
+// Monday-Sunday of the week containing `d` - matches the app's Monday-first
+// week convention used elsewhere (e.g. reports.py's ref.weekday()).
+function currentWeekRange() {
+  const now = new Date()
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  return { start: isoDate(monday), end: isoDate(sunday) }
 }
 
 export default function ReportsPage() {
   const { isAdmin } = useAuth()
-  const [startDate, setStartDate] = useState(() => isoDaysAgo(29))
-  const [endDate, setEndDate] = useState(() => isoDaysAgo(0))
+  const [range, setRange] = useState(currentWeekRange)
   const [report, setReport] = useState(null)
   const [repairs, setRepairs] = useState(null)
   const [progress, setProgress] = useState(null)
@@ -30,8 +40,7 @@ export default function ReportsPage() {
   const [users, setUsers] = useState([])
   const [selectedUserId, setSelectedUserId] = useState('') // admin-only: '' = whole team
 
-  const [exporting, setExporting] = useState('') // '' | 'excel' | 'pdf'
-  const [exportError, setExportError] = useState('')
+  const [exportModalOpen, setExportModalOpen] = useState(false)
 
   useEffect(() => {
     if (isAdmin) api.getUsers().then(setUsers).catch(() => {})
@@ -40,7 +49,7 @@ export default function ReportsPage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      if (endDate < startDate) return
+      if (!range.start || !range.end || range.end < range.start) return
       setLoading(true)
       setError('')
       try {
@@ -50,7 +59,7 @@ export default function ReportsPage() {
         // specific worker, that worker's own progress replaces the org-wide
         // metric the same way it would if that worker viewed this page
         // themselves - Taxonomy Progress stays the org-wide view regardless.
-        const rangeParams = { start_date: startDate, end_date: endDate }
+        const rangeParams = { start_date: range.start, end_date: range.end }
         if (isAdmin && selectedUserId) rangeParams.user_id = selectedUserId
         const [reportData, repairsData, progressData, detailData] = await Promise.all([
           api.getCompletionsReport(rangeParams),
@@ -73,83 +82,57 @@ export default function ReportsPage() {
     return () => {
       cancelled = true
     }
-  }, [startDate, endDate, selectedUserId, isAdmin])
+  }, [range.start, range.end, selectedUserId, isAdmin])
 
   const progressItems = progress ? progress[progressLevel] : []
   const selectedProgressItem = progressItems.find((i) => String(i.id) === String(progressNodeId)) || progressItems[0]
 
-  async function handleExport(kind) {
-    setExportError('')
-    setExporting(kind)
-    try {
-      const params = { start_date: startDate, end_date: endDate }
-      if (isAdmin && selectedUserId) params.user_id = selectedUserId
-      if (kind === 'excel') await api.exportReportExcel(params)
-      else await api.exportReportPdf(params)
-    } catch (err) {
-      setExportError(err.message || `Failed to export ${kind}`)
-    } finally {
-      setExporting('')
-    }
+  async function handleExport(kind, start, end) {
+    const params = { start_date: start, end_date: end }
+    if (isAdmin && selectedUserId) params.user_id = selectedUserId
+    if (kind === 'excel') await api.exportReportExcel(params)
+    else await api.exportReportPdf(params)
   }
 
   return (
     <div className="app-shell">
       <Sidebar />
       <main className="main-content">
-        <div className="page-header">
-          <h1>
-            {isAdmin
-              ? selectedUserId
-                ? `${users.find((u) => String(u.UserID) === String(selectedUserId))?.Username || ''}'s Reports`
-                : 'Reports'
-              : 'My Reports'}
-          </h1>
-          {!isAdmin && <p className="hint">Your own completions and activity - not the whole team's.</p>}
-          {isAdmin && (
-            <label>
-              Worker
-              <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}>
-                <option value="">Whole team</option>
-                {users.map((u) => (
-                  <option key={u.UserID} value={u.UserID}>
-                    {u.Username}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="reports-date-picker">
-            Start date
-            <input type="date" value={startDate} max={endDate} onChange={(e) => setStartDate(e.target.value)} />
-          </label>
-          <label className="reports-date-picker">
-            End date
-            <input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
-          </label>
-          <div className="reports-export-actions">
-            <button
-              className="secondary"
-              disabled={exporting !== ''}
-              onClick={() => handleExport('excel')}
-              title="Excel: file name, process type, assigned/completion timestamps for the selected range and user"
-            >
-              {exporting === 'excel' ? 'Exporting...' : 'Export Excel'}
-            </button>
-            <button
-              className="secondary"
-              disabled={exporting !== ''}
-              onClick={() => handleExport('pdf')}
-              title="PDF: full report including charts for the selected range and user"
-            >
-              {exporting === 'pdf' ? 'Exporting...' : 'Export PDF'}
+        <div className="page-header reports-page-header">
+          <div className="reports-header-row">
+            <h1>
+              {isAdmin
+                ? selectedUserId
+                  ? `${users.find((u) => String(u.UserID) === String(selectedUserId))?.Username || ''}'s Reports`
+                  : 'Reports'
+                : 'My Reports'}
+            </h1>
+            {!isAdmin && <p className="hint">Your own completions and activity - not the whole team's.</p>}
+            {isAdmin && (
+              <label>
+                Worker
+                <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}>
+                  <option value="">Whole team</option>
+                  {users.map((u) => (
+                    <option key={u.UserID} value={u.UserID}>
+                      {u.Username}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+
+          <div className="reports-header-row">
+            <DateRangeCalendar value={range} onChange={(start, end) => end && setRange({ start, end })} />
+            <button className="secondary reports-export-btn" onClick={() => setExportModalOpen(true)}>
+              Export
             </button>
           </div>
         </div>
 
-        {endDate < startDate && <div className="error-banner">End date must not be before start date.</div>}
+        {range.end < range.start && <div className="error-banner">End date must not be before start date.</div>}
         {error && <div className="error-banner">{error}</div>}
-        {exportError && <div className="error-banner">{exportError}</div>}
         {loading || !report ? (
           <div className="loading">Loading...</div>
         ) : (
@@ -169,7 +152,9 @@ export default function ReportsPage() {
 
             <div className="reports-grid">
               <div className="reports-panel reports-panel-wide">
-                <h3>Completions - {report.startDate} to {report.endDate}</h3>
+                <h3>
+                  Completions - {report.startDate} to {report.endDate}
+                </h3>
                 <MonthBarChart data={report.series} />
               </div>
               <div className="reports-panel">
@@ -182,10 +167,17 @@ export default function ReportsPage() {
               </div>
               {repairs && (
                 <div className="reports-panel reports-panel-wide">
-                  <h3>Repairs - {repairs.startDate} to {repairs.endDate}</h3>
+                  <h3>
+                    Repairs - {repairs.startDate} to {repairs.endDate}
+                  </h3>
                   <MonthBarChart data={repairs.series} />
                 </div>
               )}
+
+              <div className="reports-panel reports-panel-2col">
+                <h3>Worked Files</h3>
+                {!detail ? <div className="loading">Loading...</div> : <WorkedFilesTable rows={detail.rows} />}
+              </div>
 
               {progress && (
                 <div className="reports-panel reports-panel-wide">
@@ -213,17 +205,19 @@ export default function ReportsPage() {
                   <TaxonomyCompletionPie item={selectedProgressItem} />
                 </div>
               )}
-
-              {detail && (
-                <div className="reports-panel reports-panel-wide">
-                  <h3>Worked Files - {startDate} to {endDate}</h3>
-                  <WorkedFilesTable rows={detail.rows} />
-                </div>
-              )}
             </div>
           </>
         )}
       </main>
+
+      {exportModalOpen && (
+        <ExportReportModal
+          initialStart={range.start}
+          initialEnd={range.end}
+          onExport={handleExport}
+          onClose={() => setExportModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

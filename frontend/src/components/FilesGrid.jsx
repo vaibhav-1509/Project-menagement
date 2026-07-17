@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AgGridReact } from 'ag-grid-react'
 import { AllCommunityModule, ModuleRegistry, colorSchemeDark, themeQuartz } from 'ag-grid-community'
@@ -111,7 +111,8 @@ export default function FilesGrid({
     () =>
       lookups.processTypes.map((pt) => ({
         headerName: pt.name,
-        flex: 1,
+        colId: `stage_${pt.id}`,
+        minWidth: 80,
         valueGetter: (p) => {
           const stage = (p.data.processStages || []).find((s) => s.processTypeId === pt.id)
           if (!stage) return 'Pending'
@@ -136,29 +137,40 @@ export default function FilesGrid({
 
   const columnDefs = useMemo(
     () => [
-      { field: 'FileName', headerName: 'File Name', flex: 2 },
+      { field: 'FileName', headerName: 'File Name', colId: 'FileName', minWidth: 70 },
       {
         headerName: 'Active',
-        flex: 0.7,
+        colId: 'Active',
+        minWidth: 60,
         sortable: false,
         filter: false,
         cellRenderer: (p) => (
-          <span className={`status-pill ${p.data.IsActive ? 'active' : 'inactive'}`}>
+          <span className={`status-pill ${p.data.IsActive ? 'file-active' : 'file-inactive'}`}>
             {p.data.IsActive ? 'Active' : 'Inactive'}
           </span>
         ),
       },
-      { headerName: 'Phase', flex: 1, valueGetter: (p) => lookupName(lookups.phases, p.data.PhaseID) },
-      { headerName: 'Category', flex: 1, valueGetter: (p) => lookupName(lookups.categories, p.data.CategoryID) },
+      {
+        headerName: 'Category',
+        flex: 1,
+        minWidth: 110,
+        wrapText: true,
+        autoHeight: true,
+        valueGetter: (p) => lookupName(lookups.categories, p.data.CategoryID),
+      },
       {
         headerName: 'Sub-Category',
         flex: 1,
+        minWidth: 110,
+        wrapText: true,
+        autoHeight: true,
         valueGetter: (p) => lookupName(lookups.subCategories, p.data.SubCategoryID),
       },
       {
         field: 'Priority',
         headerName: 'Priority',
-        flex: 0.9,
+        colId: 'Priority',
+        minWidth: 60,
         editable: !readOnly && isAdmin,
         cellEditor: 'agSelectCellEditor',
         cellEditorParams: { values: PRIORITY_VALUES },
@@ -166,17 +178,13 @@ export default function FilesGrid({
         cellRenderer: (p) => <span className={`status-pill ${priorityClass(p.value)}`}>{p.value}</span>,
       },
       {
-        headerName: 'Location',
-        flex: 1.4,
+        headerName: 'Phase',
+        flex: 1,
+        minWidth: 100,
         sortable: false,
         filter: false,
         cellRenderer: (p) => {
           const row = p.data
-          const parts = [
-            lookupName(lookups.phases, row.PhaseID),
-            lookupName(lookups.categories, row.CategoryID),
-            lookupName(lookups.subCategories, row.SubCategoryID),
-          ]
           return (
             <button
               type="button"
@@ -190,7 +198,7 @@ export default function FilesGrid({
                 navigate(`/browse?${params.toString()}`)
               }}
             >
-              {parts.join(' > ')}
+              {lookupName(lookups.phases, row.PhaseID)}
             </button>
           )
         },
@@ -200,10 +208,12 @@ export default function FilesGrid({
         field: 'UpdatedAt',
         headerName: 'Updated',
         flex: 1,
+        minWidth: 150,
         valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString() : '-'),
       },
       {
         headerName: 'Actions',
+        minWidth: 260,
         flex: 2.6,
         sortable: false,
         filter: false,
@@ -312,6 +322,23 @@ export default function FilesGrid({
     ]
   )
 
+  // File Name, Active, Priority, and each per-process-type stage column show
+  // short badge/name text - they shrink to fit their content instead of
+  // stretching, so the remaining flexible columns (Category, Sub-Category,
+  // Phase, Updated, Actions) get the space and the grid scrolls horizontally
+  // once their minWidths no longer all fit.
+  const squeezeColIds = useMemo(
+    () => ['FileName', 'Active', 'Priority', ...stageColumns.map((c) => c.colId)],
+    [stageColumns]
+  )
+
+  const autoSizeSqueezeColumns = useCallback(
+    (params) => {
+      params.api.autoSizeColumns(squeezeColIds)
+    },
+    [squeezeColIds]
+  )
+
   return (
     <div className="grid-wrapper">
       <AgGridReact
@@ -323,6 +350,8 @@ export default function FilesGrid({
         paginationPageSize={20}
         rowSelection={isAdmin ? { mode: 'multiRow' } : undefined}
         onSelectionChanged={isAdmin ? (e) => onSelectionChanged?.(e.api.getSelectedRows()) : undefined}
+        onFirstDataRendered={autoSizeSqueezeColumns}
+        onPaginationChanged={autoSizeSqueezeColumns}
       />
     </div>
   )
