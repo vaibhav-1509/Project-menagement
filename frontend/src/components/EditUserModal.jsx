@@ -23,7 +23,14 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
   const [sharedCompletePath, setSharedCompletePath] = useState('')
   const [enabledTypeIds, setEnabledTypeIds] = useState([])
   const [pathsLoading, setPathsLoading] = useState(true)
-  const [browserField, setBrowserField] = useState(null) // 'pending' | 'complete'
+  const [browserField, setBrowserField] = useState(null) // 'pending' | 'complete' | 'allPending'
+
+  // All Pending - the global raw intake pool folder (all 3DM files land here
+  // before being imported). Only meaningful for admins; stored in AppSettings.
+  const [allPendingPath, setAllPendingPath] = useState('')
+  const [allPendingLoading, setAllPendingLoading] = useState(true)
+  const [allPendingSaving, setAllPendingSaving] = useState(false)
+  const [allPendingError, setAllPendingError] = useState('')
 
   const [leave, setLeave] = useState([])
   const [leaveLoading, setLeaveLoading] = useState(true)
@@ -41,6 +48,12 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
 
   useEffect(() => {
     reloadLeave().finally(() => setLeaveLoading(false))
+    // Load All Pending path from global settings
+    api
+      .getSettings()
+      .then((s) => setAllPendingPath(s.allPendingPath || ''))
+      .catch(() => {})
+      .finally(() => setAllPendingLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -84,6 +97,32 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
   // work) - Phase itself is never required, since a worker's access is
   // entirely defined by what's assigned to them, not by phase membership.
   const hasWorkerRole = roleIds.some((id) => lookups.roles.find((r) => r.id === id)?.name !== 'Admin')
+  const hasAdminRole = roleIds.some((id) => lookups.roles.find((r) => r.id === id)?.name === 'Admin')
+
+  async function handleSaveAllPending() {
+    setAllPendingSaving(true)
+    setAllPendingError('')
+    try {
+      // updateSettings preserves the existing threshold/stale values by
+      // re-fetching them first, but we only want to touch allPendingPath here.
+      // We pass null for thresholds so the backend keeps whatever it has.
+      // Actually updateSettings requires the numeric fields, so fetch first.
+      const current = await api.getSettings()
+      await api.updateSettings(
+        current.lowWorkloadThreshold,
+        current.staleAssignmentDays,
+        {
+          allPendingPath,
+          adminPendingPath: current.adminPendingPath,
+          adminCompletePath: current.adminCompletePath,
+        }
+      )
+    } catch (err) {
+      setAllPendingError(err.message || 'Failed to save All Pending folder')
+    } finally {
+      setAllPendingSaving(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -228,6 +267,36 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
           )}
         </div>
 
+        {hasAdminRole && (
+          <div className="move-section">
+            <h3>All Pending</h3>
+            <p className="hint">
+              Raw intake pool — all 3DM files land here before being imported into the system.
+              This is the first folder in the pipeline; files are transferred and assigned from here.
+            </p>
+            {allPendingLoading ? (
+              <div className="loading">Loading...</div>
+            ) : (
+              <>
+                <div className="path-input-row">
+                  <input
+                    value={allPendingPath}
+                    onChange={(e) => setAllPendingPath(e.target.value)}
+                    placeholder="All Pending folder path"
+                  />
+                  <button type="button" className="secondary" onClick={() => setBrowserField('allPending')}>
+                    Choose...
+                  </button>
+                </div>
+                {allPendingError && <div className="error-banner">{allPendingError}</div>}
+                <button type="button" onClick={handleSaveAllPending} disabled={allPendingSaving}>
+                  {allPendingSaving ? 'Saving...' : 'Save All Pending'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {hasWorkerRole && (
           <div className="move-section">
             <h3>Pending / Complete Folders</h3>
@@ -291,10 +360,17 @@ export default function EditUserModal({ user, lookups, onSave, onClose }) {
 
       {browserField && (
         <FolderBrowserModal
-          startPath={browserField === 'pending' ? sharedPendingPath : sharedCompletePath}
+          startPath={
+            browserField === 'pending'
+              ? sharedPendingPath
+              : browserField === 'allPending'
+              ? allPendingPath
+              : sharedCompletePath
+          }
           onClose={() => setBrowserField(null)}
           onSelect={(path) => {
             if (browserField === 'pending') setSharedPendingPath(path)
+            else if (browserField === 'allPending') setAllPendingPath(path)
             else setSharedCompletePath(path)
             setBrowserField(null)
           }}

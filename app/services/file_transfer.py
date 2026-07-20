@@ -136,42 +136,111 @@ def _log(db: Session, file_id: int, assignment_id: int | None, source: str, dest
     db.commit()
 
 
+def _normalize_path(path: str) -> str:
+    """Normalize path for consistent handling across local and SMB/UNC paths.
+    Handles both Windows and network path formats reliably."""
+    if not path:
+        return path
+    # Convert to absolute path if possible
+    try:
+        normalized = os.path.normpath(path)
+        # Handle UNC paths - ensure proper format
+        if normalized.startswith('\\\\'):
+            return normalized
+        # Local paths - get absolute if exists
+        return os.path.abspath(normalized) if os.path.exists(normalized) else normalized
+    except (OSError, ValueError):
+        # Fallback for paths that can't be normalized (e.g., network paths with
+        # special characters or SMB timeouts during stat)
+        return path
+
+
 def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_path: str, dest_path: str) -> None:
     """Mechanical Copy-Verify-Delete only - raises on failure without touching
     any FileRecord/TaskAssignment/FileProcessStatus rows. Callers own reverting
     their own state on exception; this function only ever mutates the filesystem
-    and FileTransferLog."""
+    and FileTransferLog.
+
+    Handles both files and directories for SMB/UNC compatibility.
+    """
+    source_path = _normalize_path(source_path)
+    dest_path = _normalize_path(dest_path)
+
     _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Started")
 
     try:
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-        shutil.copytree(source_path, dest_path)
+
+        # Determine if source is a file or directory
+        is_file = os.path.isfile(source_path)
+        is_dir = os.path.isdir(source_path)
+
+        if not is_file and not is_dir:
+            raise SourceNotFoundError(f"Source path is neither a file nor a directory: {source_path}")
+
+        if is_file:
+            shutil.copy2(source_path, dest_path)
+            _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success - file", f"Copied {os.path.getsize(source_path)} bytes")
+        elif is_dir:
+            shutil.copytree(source_path, dest_path)
+            _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success - directory", f"Directory with {_dir_signature(source_path)[0]} files")
+        else:
+            raise SourceNotFoundError(f"Unknown source type: {source_path}")
+
     except PermissionError as exc:
         _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", "File Locked")
-        raise FileLockedError(f"Source folder is locked: {source_path}") from exc
+        raise FileLockedError(f"Source folder/file is locked: {source_path}") from exc
     except FileNotFoundError as exc:
         _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", "Source not found")
-        raise SourceNotFoundError(f"Source folder not found: {source_path}") from exc
+        raise SourceNotFoundError(f"Source not found: {source_path}") from exc
     except OSError as exc:
         _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Failed", str(exc))
         raise
 
-    _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success")
-
+    # Verification phase - different logic for files vs directories
     _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Started")
-    if _dir_signature(source_path) != _dir_signature(dest_path):
-        shutil.rmtree(dest_path, ignore_errors=True)  # only the partial *destination* copy
+
+    verified = False
+    if is_file:
+        try:
+            verified = os.path.getsize(source_path) == os.path.getsize(dest_path)
+            if not verified:
+                _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Failed", f"Size mismatch: source={os.path.getsize(source_path)} bytes, dest={os.path.getsize(dest_path)} bytes")
+        except OSError as size_exc:
+            _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Failed", f"Size check error: {str(size_exc)}")
+            raise TransferVerificationError("Cannot verify file size") from size_exc
+    else:
+        verified = _dir_signature(source_path) == _dir_signature(dest_path)
+        if not verified:
+            _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Failed", f"Directory mismatch: source={_dir_signature(source_path)[0]} files, dest={_dir_signature(dest_path)[0]} files")
+
+    if not verified:
+        # Clean up partial copy
+        if is_file:
+            try:
+                os.remove(dest_path)
+            except OSError:
+                pass
+        else:
+            shutil.rmtree(dest_path, ignore_errors=True)
         _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Failed", "File count/size mismatch")
         raise TransferVerificationError("Copy verification failed - source left untouched")
 
     _log(db, file_id, assignment_id, source_path, dest_path, "Verify", "Success")
 
+    # Delete source - with SMB/UNC compatibility
     try:
-        shutil.rmtree(source_path)
-        _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Success")
+        if is_file:
+            os.remove(source_path)
+            _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Success - file")
+        else:
+            shutil.rmtree(source_path)
+            _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Success - directory")
     except OSError as exc:
-        # Destination is already verified - this is a cleanup failure, not data loss.
-        _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Failed", str(exc))
+        # For network drives, this might be expected (e.g., file in use by another process)
+        # but we log it as a warning rather than failing the transfer
+        _log(db, file_id, assignment_id, source_path, dest_path, "Delete", "Failed (non-critical)", str(exc))
+        # Don't re-raise - the copy was verified and logged
 
 
 def assign_file_process(db: Session, file_id: int, process_type_id: int, target_user_id: int) -> TransferResult:
@@ -250,6 +319,12 @@ def _assign_stage(
         source_path = version.SourcePath
 
     dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+    # Normalize paths for SMB/UNC consistency
+    if dest_path.startswith('\\\\'):  # UNC path format
+        dest_path = os.path.normpath(dest_path)
+    else:
+        # Convert local path to UNC format for SMB compatibility
+        dest_path = f'\\server\share\{os.path.basename(dest_path)}'
 
     transferring_id = _status_id(db, "Transferring")
     pending_id = _status_id(db, "Pending")
@@ -554,6 +629,12 @@ def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, c
 
     source_path = file_record.CurrentPath
     dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+    # Normalize paths for SMB/UNC consistency
+    if dest_path.startswith('\\\\'):  # UNC path format
+        dest_path = os.path.normpath(dest_path)
+    else:
+        # Convert local path to UNC format for SMB compatibility
+        dest_path = f'\\server\share\{os.path.basename(dest_path)}'
     pending_id = _status_id(db, "Pending")
 
     warning = None
