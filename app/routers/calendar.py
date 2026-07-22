@@ -43,6 +43,7 @@ def get_activity(
     failed_id = _status_id(db, "Failed")
     repair_id = _status_id(db, "Repair")
     transferring_id = _status_id(db, "Transferring")
+    revoked_id = _status_id(db, "Revoked")
 
     # Excludes only assignment rows whose copy never actually finished (still
     # stuck at Transferring when reverted - e.g. the source folder wasn't
@@ -52,12 +53,15 @@ def get_activity(
     # historical event even if later Reset (Reset only flips IsActive, it
     # deliberately never changes StatusID - see reset_file), so gating on
     # StatusID being in a fixed terminal list would wrongly erase those.
+    # Also excludes Revoked assignments - these are admin data-entry mistakes
+    # (wrong file/wrong worker) that never represented real work.
     assigned_q = (
         select(cast(TaskAssignment.AssignedTS, Date), func.count())
         .where(
             TaskAssignment.AssignedTS >= first_day,
             TaskAssignment.AssignedTS < next_month_start,
             or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID != transferring_id),  # noqa: E712
+            TaskAssignment.StatusID != revoked_id,
         )
         .group_by(cast(TaskAssignment.AssignedTS, Date))
     )
@@ -67,6 +71,7 @@ def get_activity(
             TaskAssignment.CompletionTS >= first_day,
             TaskAssignment.CompletionTS < next_month_start,
             TaskAssignment.StatusID == complete_id,
+            TaskAssignment.StatusID != revoked_id,
         )
         .group_by(cast(TaskAssignment.CompletionTS, Date))
     )
@@ -76,6 +81,7 @@ def get_activity(
             TaskAssignment.CompletionTS >= first_day,
             TaskAssignment.CompletionTS < next_month_start,
             TaskAssignment.StatusID == failed_id,
+            TaskAssignment.StatusID != revoked_id,
         )
         .group_by(cast(TaskAssignment.CompletionTS, Date))
     )
@@ -85,6 +91,7 @@ def get_activity(
             TaskAssignment.CompletionTS >= first_day,
             TaskAssignment.CompletionTS < next_month_start,
             TaskAssignment.StatusID == repair_id,
+            TaskAssignment.StatusID != revoked_id,
         )
         .group_by(cast(TaskAssignment.CompletionTS, Date))
     )
@@ -133,6 +140,7 @@ def get_day(
     failed_id = _status_id(db, "Failed")
     repair_id = _status_id(db, "Repair")
     transferring_id = _status_id(db, "Transferring")
+    revoked_id = _status_id(db, "Revoked")
 
     base_query = (
         select(TaskAssignment, User.Username, FileRecord.FileName, ProcessType.ProcessTypeName)
@@ -148,10 +156,15 @@ def get_day(
             TaskAssignment.AssignedTS >= target_date,
             TaskAssignment.AssignedTS < next_day,
             or_(TaskAssignment.IsActive == True, TaskAssignment.StatusID != transferring_id),  # noqa: E712
+            TaskAssignment.StatusID != revoked_id,
         )
     ).all()
     completion_rows = db.execute(
-        base_query.where(TaskAssignment.CompletionTS >= target_date, TaskAssignment.CompletionTS < next_day)
+        base_query.where(
+            TaskAssignment.CompletionTS >= target_date,
+            TaskAssignment.CompletionTS < next_day,
+            TaskAssignment.StatusID != revoked_id,
+        )
     ).all()
 
     events = []

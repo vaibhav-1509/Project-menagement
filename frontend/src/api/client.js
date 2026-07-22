@@ -212,7 +212,6 @@ export function previewImport(file, manualContext = null) {
     form.append('phase_name', manualContext.phaseName)
     if (manualContext.categoryName) form.append('category_name', manualContext.categoryName)
     if (manualContext.subCategoryName) form.append('sub_category_name', manualContext.subCategoryName)
-    form.append('source_root_path', manualContext.sourceRootPath)
     if (manualContext.fileNamesText) form.append('file_names_text', manualContext.fileNamesText)
   }
   return request('/admin/imports/preview', { method: 'POST', body: form, isForm: true })

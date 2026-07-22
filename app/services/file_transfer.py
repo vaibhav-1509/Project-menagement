@@ -155,6 +155,51 @@ def _normalize_path(path: str) -> str:
         return path
 
 
+def _resolve_existing_source_path(source_path: str) -> str:
+    """Finds the actual existing path on disk for source_path.
+    Checks:
+      1. source_path as-is (if os.path.exists)
+      2. source_path + ".3dm" (if os.path.exists)
+      3. source_path + ".3DM" (if os.path.exists)
+      4. If source_path ends with .3dm / .3DM, source_path[:-4] (if os.path.exists)
+      5. Parent directory search for case-insensitive / extension-insensitive match
+    Returns resolved existing path or original if none exist.
+    """
+    if not source_path:
+        return source_path
+    normalized = _normalize_path(source_path)
+    if os.path.exists(normalized):
+        return normalized
+
+    if not normalized.lower().endswith('.3dm'):
+        if os.path.exists(normalized + '.3dm'):
+            return normalized + '.3dm'
+        if os.path.exists(normalized + '.3DM'):
+            return normalized + '.3DM'
+
+    if normalized.lower().endswith('.3dm'):
+        no_ext = normalized[:-4]
+        if os.path.exists(no_ext):
+            return no_ext
+
+    parent_dir = os.path.dirname(normalized)
+    target_name = os.path.basename(normalized)
+    target_stem = os.path.splitext(target_name)[0].lower()
+
+    if parent_dir and os.path.exists(parent_dir) and os.path.isdir(parent_dir):
+        try:
+            for item in os.listdir(parent_dir):
+                item_stem = os.path.splitext(item)[0].lower()
+                if item.lower() == target_name.lower() or item_stem == target_stem:
+                    candidate = os.path.join(parent_dir, item)
+                    if os.path.exists(candidate):
+                        return os.path.normpath(candidate)
+        except OSError:
+            pass
+
+    return normalized
+
+
 def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_path: str, dest_path: str) -> None:
     """Mechanical Copy-Verify-Delete only - raises on failure without touching
     any FileRecord/TaskAssignment/FileProcessStatus rows. Callers own reverting
@@ -182,7 +227,7 @@ def _copy_verify_delete(db: Session, file_id: int, assignment_id: int, source_pa
             shutil.copy2(source_path, dest_path)
             _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success - file", f"Copied {os.path.getsize(source_path)} bytes")
         elif is_dir:
-            shutil.copytree(source_path, dest_path)
+            shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
             _log(db, file_id, assignment_id, source_path, dest_path, "Copy", "Success - directory", f"Directory with {_dir_signature(source_path)[0]} files")
         else:
             raise SourceNotFoundError(f"Unknown source type: {source_path}")
@@ -318,13 +363,9 @@ def _assign_stage(
             raise ValueError("File has no known location (no CurrentPath and no version on record)")
         source_path = version.SourcePath
 
-    dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
-    # Normalize paths for SMB/UNC consistency
-    if dest_path.startswith('\\\\'):  # UNC path format
-        dest_path = os.path.normpath(dest_path)
-    else:
-        # Convert local path to UNC format for SMB compatibility
-        dest_path = f'\\server\share\{os.path.basename(dest_path)}'
+    source_path = _resolve_existing_source_path(source_path)
+    base_name = os.path.basename(source_path)
+    dest_path = os.path.normpath(os.path.join(worker_path.PendingPath, base_name))
 
     transferring_id = _status_id(db, "Transferring")
     pending_id = _status_id(db, "Pending")
@@ -427,7 +468,10 @@ def complete_process_assignment(db: Session, assignment_id: int, current_user: U
     source_path = file_record.CurrentPath
     if not source_path:
         raise ValueError("File has no known current location")
-    dest_path = os.path.join(worker_path.CompletePath, file_record.FileName)
+    
+    source_path = _resolve_existing_source_path(source_path)
+    base_name = os.path.basename(source_path)
+    dest_path = os.path.normpath(os.path.join(worker_path.CompletePath, base_name))
 
     stage_status = db.scalar(
         select(FileProcessStatus).where(
@@ -436,21 +480,33 @@ def complete_process_assignment(db: Session, assignment_id: int, current_user: U
     )
 
     submitted_id = _status_id(db, "Submitted")
-
     warning = None
-    try:
-        _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
-    except SourceNotFoundError:
-        # Same rationale as assign_file_process - someone likely already moved
-        # the file manually. Mark the stage Submitted for tracking/reporting
-        # purposes, but flag that the physical file still needs a manual move.
-        warning = (
-            f"Source folder not found at {source_path} - marked Submitted, but the file was not "
-            f"copied. Please move it into {dest_path} manually."
-        )
-    except (FileLockedError, TransferVerificationError, OSError):
-        # Retryable - the assignment stays active/in-progress, nothing reverted.
-        raise
+
+    possible_complete_paths = [
+        dest_path,
+        dest_path + ".3dm",
+        dest_path + ".3DM",
+        os.path.normpath(os.path.join(worker_path.CompletePath, os.path.splitext(base_name)[0])),
+        os.path.normpath(os.path.join(worker_path.CompletePath, os.path.splitext(base_name)[0] + ".3dm")),
+    ]
+    already_moved_path = None
+    for p in possible_complete_paths:
+        if os.path.exists(p):
+            already_moved_path = p
+            break
+
+    if already_moved_path:
+        dest_path = already_moved_path
+    elif os.path.normpath(source_path) != os.path.normpath(dest_path):
+        try:
+            _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
+        except SourceNotFoundError:
+            warning = (
+                f"Source folder/file not found at {source_path} - marked Submitted, but the file was not "
+                f"copied. Please move it into {dest_path} manually."
+            )
+        except (FileLockedError, TransferVerificationError, OSError):
+            raise
 
     file_record.CurrentPath = dest_path
     file_record.StatusID = submitted_id
@@ -628,13 +684,12 @@ def reopen_process_assignment(db: Session, file_id: int, process_type_id: int, c
         raise ValueError("No assignment record found to reopen")
 
     source_path = file_record.CurrentPath
-    dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
-    # Normalize paths for SMB/UNC consistency
-    if dest_path.startswith('\\\\'):  # UNC path format
-        dest_path = os.path.normpath(dest_path)
+    if source_path:
+        source_path = _resolve_existing_source_path(source_path)
+        base_name = os.path.basename(source_path)
+        dest_path = os.path.normpath(os.path.join(worker_path.PendingPath, base_name))
     else:
-        # Convert local path to UNC format for SMB compatibility
-        dest_path = f'\\server\share\{os.path.basename(dest_path)}'
+        dest_path = os.path.normpath(os.path.join(worker_path.PendingPath, file_record.FileName))
     pending_id = _status_id(db, "Pending")
 
     warning = None
@@ -697,25 +752,38 @@ def mark_assignment_failed(db: Session, assignment_id: int, reason: str, current
     source_path = file_record.CurrentPath
     if not source_path:
         raise ValueError("File has no known current location")
-    dest_path = os.path.join(worker_path.CompletePath, file_record.FileName)
+    
+    source_path = _resolve_existing_source_path(source_path)
+    base_name = os.path.basename(source_path)
+    dest_path = os.path.normpath(os.path.join(worker_path.CompletePath, base_name))
+
+    possible_complete_paths = [
+        dest_path,
+        dest_path + ".3dm",
+        dest_path + ".3DM",
+        os.path.normpath(os.path.join(worker_path.CompletePath, os.path.splitext(base_name)[0])),
+        os.path.normpath(os.path.join(worker_path.CompletePath, os.path.splitext(base_name)[0] + ".3dm")),
+    ]
+    already_moved_path = None
+    for p in possible_complete_paths:
+        if os.path.exists(p):
+            already_moved_path = p
+            break
 
     failed_id = _status_id(db, "Failed")
-
     warning = None
-    if os.path.normpath(source_path) != os.path.normpath(dest_path):
+
+    if already_moved_path:
+        dest_path = already_moved_path
+    elif os.path.normpath(source_path) != os.path.normpath(dest_path):
         try:
             _copy_verify_delete(db, assignment.FileID, assignment.AssignmentID, source_path, dest_path)
         except SourceNotFoundError:
-            # Same rationale as complete_process_assignment - someone likely
-            # already moved the file manually. Mark Failed for tracking
-            # purposes anyway, but flag that the physical file still needs a
-            # manual move into the Complete folder.
             warning = (
-                f"Source folder not found at {source_path} - marked Failed, but the file was not "
+                f"Source folder/file not found at {source_path} - marked Failed, but the file was not "
                 f"copied. Please move it into {dest_path} manually."
             )
         except (FileLockedError, TransferVerificationError, OSError):
-            # Retryable - the assignment stays active, nothing reverted.
             raise
     else:
         # Already sitting in this worker's Complete folder (e.g. failing again

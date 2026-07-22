@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
+from app.routers.workboard import get_or_create_settings
 from app.schemas import CsvImportCommitRequest, CsvImportPreview
 from app.security import require_admin
 from app.services.csv_import import commit_import, parse_csv, parse_csv_simple, preview_import
@@ -17,7 +18,6 @@ async def preview(
     phase_name: str | None = Form(None),
     category_name: str | None = Form(None),
     sub_category_name: str | None = Form(None),
-    source_root_path: str | None = Form(None),
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -25,15 +25,19 @@ async def preview(
     - Full CSV (file given, phase_name omitted): every row carries its own
       file_name, phase_name, category_name, sub_category_name, source_path.
     - Manual CSV (file + phase_name given): the CSV is filename-only - Phase/
-      Category/Sub-Category/source root were picked once in the UI.
+      Category/Sub-Category were picked once in the UI.
     - Manual typed entry (file_names_text given, no file): same as manual CSV
-      but the names were typed directly in the UI instead of uploaded."""
+      but the names were typed directly in the UI instead of uploaded.
+    All modes resolve source paths against the global All Pending folder path."""
     try:
+        settings = get_or_create_settings(db)
+        source_root_path = (settings.AllPendingPath or "").strip()
+        if not source_root_path:
+            raise ValueError("All Pending folder path is not set in Admin Settings. Please configure it in User Control.")
+
         if file is not None:
             raw = await file.read()
             if phase_name:
-                if not source_root_path:
-                    raise ValueError("Source folder path is required for a manual import")
                 rows = parse_csv_simple(
                     raw,
                     phase_name=phase_name,
@@ -42,10 +46,10 @@ async def preview(
                     source_root=source_root_path,
                 )
             else:
-                rows = parse_csv(raw)
+                rows = parse_csv(raw, source_root=source_root_path)
         elif file_names_text is not None:
-            if not phase_name or not source_root_path:
-                raise ValueError("Phase and source folder path are required")
+            if not phase_name:
+                raise ValueError("Phase is required")
             rows = parse_csv_simple(
                 file_names_text.encode("utf-8"),
                 phase_name=phase_name,

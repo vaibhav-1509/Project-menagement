@@ -25,18 +25,21 @@ from app.schemas import (
 )
 
 
-def parse_csv(raw_bytes: bytes) -> list[CsvImportRow]:
+def parse_csv(raw_bytes: bytes, source_root: str | None = None) -> list[CsvImportRow]:
     text = raw_bytes.decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
     rows = []
     for r in reader:
+        sp = (r.get("source_path") or "").strip() or r["file_name"].strip()
+        if source_root and not os.path.isabs(sp):
+            sp = os.path.join(source_root, sp)
         rows.append(
             CsvImportRow(
                 file_name=r["file_name"].strip(),
                 phase_name=r["phase_name"].strip(),
                 category_name=(r.get("category_name") or "").strip() or None,
                 sub_category_name=(r.get("sub_category_name") or "").strip() or None,
-                source_path=r["source_path"].strip(),
+                source_path=sp,
             )
         )
     return rows

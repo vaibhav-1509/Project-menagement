@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import Modal from './Modal'
-import FolderBrowserModal from './FolderBrowserModal'
 import ComboSelect from './ComboSelect'
 import * as api from '../api/client'
 
@@ -12,9 +11,7 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
   const [phaseName, setPhaseName] = useState('')
   const [categoryName, setCategoryName] = useState('')
   const [subCategoryName, setSubCategoryName] = useState('')
-  const [sourceRootPath, setSourceRootPath] = useState('')
   const [fileNamesText, setFileNamesText] = useState('')
-  const [browserOpen, setBrowserOpen] = useState(false)
   const [preview, setPreview] = useState(null)
   const [resolutions, setResolutions] = useState({})
   const [error, setError] = useState('')
@@ -34,7 +31,6 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
       phaseName,
       categoryName: categoryName || null,
       subCategoryName: subCategoryName || null,
-      sourceRootPath,
       fileNamesText: mode === 'manual' ? fileNamesText : undefined,
     }
   }
@@ -59,12 +55,12 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
     if (mode === 'full') {
       if (!file) return
     } else if (mode === 'csv') {
-      if (!file || !phaseName || !sourceRootPath) {
-        setError('CSV file, phase, and source folder path are required')
+      if (!file || !phaseName) {
+        setError('CSV file and phase are required')
         return
       }
-    } else if (!phaseName || !sourceRootPath || !fileNamesText.trim()) {
-      setError('Phase, source folder path, and at least one file name are required')
+    } else if (!phaseName || !fileNamesText.trim()) {
+      setError('Phase and at least one file name are required')
       return
     }
     setLoading(true)
@@ -141,13 +137,13 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
           {mode === 'csv' && (
             <p className="hint">
               CSV: just file_name, one per row (header optional). Every row in this batch gets the
-              Phase/Category/Sub-Category and source folder picked below.
+              Phase/Category/Sub-Category picked below.
             </p>
           )}
           {mode === 'manual' && (
             <p className="hint">
               Type in the file/item names below - no CSV needed. Every name gets the Phase/Category/
-              Sub-Category and source folder picked below.
+              Sub-Category picked below.
             </p>
           )}
 
@@ -195,20 +191,6 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
                   emptyLabel="Select a sub-category..."
                 />
               </label>
-              <label>
-                Source folder path
-                <div className="path-input-row">
-                  <input
-                    value={sourceRootPath}
-                    onChange={(e) => setSourceRootPath(e.target.value)}
-                    placeholder="\\server\share\Polish\Characters\Hero"
-                    required
-                  />
-                  <button type="button" className="secondary" onClick={() => setBrowserOpen(true)}>
-                    Browse...
-                  </button>
-                </div>
-              </label>
             </>
           )}
 
@@ -224,16 +206,7 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
             </label>
           )}
 
-          {browserOpen && (
-            <FolderBrowserModal
-              startPath={sourceRootPath}
-              onClose={() => setBrowserOpen(false)}
-              onSelect={(path) => {
-                setSourceRootPath(path)
-                setBrowserOpen(false)
-              }}
-            />
-          )}
+
 
           {(mode === 'full' || mode === 'csv') && (
             <div
@@ -283,8 +256,8 @@ export default function ImportModal({ lookups, onClose, onImported, initialMode 
                 mode === 'full'
                   ? !file || loading
                   : mode === 'csv'
-                  ? !file || !phaseName || !sourceRootPath || loading
-                  : !phaseName || !sourceRootPath || !fileNamesText.trim() || loading
+                  ? !file || !phaseName || loading
+                  : !phaseName || !fileNamesText.trim() || loading
               }
             >
               {loading ? 'Reading...' : 'Preview'}

@@ -46,6 +46,10 @@ def _repair_status_id(db: Session) -> int:
     return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Repair"))
 
 
+def _revoked_status_id(db: Session) -> int:
+    return db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Revoked"))
+
+
 def _scope_user_id(current_user: User, requested_user_id: int | None) -> int | None:
     """Non-admins always get their own progress report only, regardless of
     what user_id they pass - counts every stage THEY personally completed,
@@ -95,13 +99,16 @@ def _repairs_by_day(
     Submitted -> Repair -> a fresh Pending, none of which sets it). Mirrors
     why calendar.py's failed_q is TaskAssignment-based for the same reason:
     Fail/Repair are attempt-level events, not stage-level "current state"
-    facts the way Complete is."""
+    facts the way Complete is. Revoked assignments (admin data-entry mistakes)
+    are excluded from repair counts."""
     if repair_id is None:
         return {}
+    revoked_id = db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Revoked"))
     query = select(cast(TaskAssignment.CompletionTS, Date), func.count()).where(
         TaskAssignment.StatusID == repair_id,
         TaskAssignment.CompletionTS >= start,
         TaskAssignment.CompletionTS < end_exclusive,
+        TaskAssignment.StatusID != revoked_id,
     )
     if user_id is not None:
         query = query.where(TaskAssignment.AssignedToUserID == user_id)
@@ -135,9 +142,11 @@ def _process_type_breakdown(
 ) -> list[BucketCountOut]:
     """Completions are sourced from FileProcessStatus, Repairs from
     TaskAssignment - same split as _completions_by_day/_repairs_by_day above,
-    for the same reason (a reject never touches FileProcessStatus)."""
+    for the same reason (a reject never touches FileProcessStatus).
+    Revoked assignments (admin data-entry mistakes) are excluded from TaskAssignment queries."""
     if status_id is None:
         return []
+    revoked_id = db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Revoked"))
     query = (
         select(ProcessType.ProcessTypeName, func.count())
         .select_from(source)
@@ -145,6 +154,9 @@ def _process_type_breakdown(
         .where(source.StatusID == status_id, source.CompletionTS >= start, source.CompletionTS < end_exclusive)
         .group_by(ProcessType.ProcessTypeName)
     )
+    # Exclude revoked assignments when querying TaskAssignment (repairs/failures)
+    if source is TaskAssignment:
+        query = query.where(source.StatusID != revoked_id)
     if user_id is not None:
         query = query.where(source.AssignedToUserID == user_id)
     return [BucketCountOut(label=name, count=count) for name, count in db.execute(query).all()]

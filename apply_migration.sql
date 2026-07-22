@@ -1,0 +1,3 @@
+ALTER TABLE AppSettings ADD AdminSourcePath NVARCHAR(500) NULL;
+ALTER TABLE FileTransferLog ADD BytesCopied BIGINT NULL;
+ALTER TABLE FileTransferLog ADD TotalBytes BIGINT NULL;

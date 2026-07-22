@@ -41,13 +41,17 @@ def _complete_status_id(db: Session) -> int | None:
 def detail_rows(db: Session, start: date_cls, end_exclusive: date_cls, user_id: int | None) -> list[dict]:
     """One row per assignment attempt touching this range - either assigned or
     completed within it - so a file assigned before the range but finished
-    inside it (or vice versa) still shows up with both of its real timestamps."""
+    inside it (or vice versa) still shows up with both of its real timestamps.
+    Revoked assignments (admin data-entry mistakes) are excluded entirely."""
+    revoked_id = db.scalar(select(FileStatus.StatusID).where(FileStatus.StatusName == "Revoked"))
+
     query = (
         select(TaskAssignment, FileRecord.FileName, ProcessType.ProcessTypeName, User.Username)
         .join(FileRecord, FileRecord.FileID == TaskAssignment.FileID)
         .join(ProcessType, ProcessType.ProcessTypeID == TaskAssignment.ProcessTypeID)
         .join(User, User.UserID == TaskAssignment.AssignedToUserID)
         .where(
+            TaskAssignment.StatusID != revoked_id,
             or_(
                 and_(TaskAssignment.AssignedTS >= start, TaskAssignment.AssignedTS < end_exclusive),
                 and_(TaskAssignment.CompletionTS >= start, TaskAssignment.CompletionTS < end_exclusive),

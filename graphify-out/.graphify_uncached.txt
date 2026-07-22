@@ -1,0 +1,8 @@
+D:\1-databse\assets\scripts\Project menagement\AGENTS.md
+D:\1-databse\assets\scripts\Project menagement\README.md
+D:\1-databse\assets\scripts\Project menagement\frontend\README.md
+D:\1-databse\assets\scripts\Project menagement\frontend\index.html
+D:\1-databse\assets\scripts\Project menagement\plan.md
+D:\1-databse\assets\scripts\Project menagement\planning.md
+D:\1-databse\assets\scripts\Project menagement\requirements.txt
+D:\1-databse\assets\scripts\Project menagement\frontend\public\favicon.svg

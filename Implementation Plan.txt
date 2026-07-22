@@ -1,0 +1,352 @@
+# File Transfer: Bug Fixes + Progress Tracking
+
+## Change 0 — Global Admin Source Folder Path
+
+### What changes and why
+
+Currently the **Source Folder Path** (the root folder where all `.3dm` files live) is
+entered manually in three import UIs: *Manual Entry*, *CSV Import*, and *Full CSV Import*.
+This path almost never changes — it's the same shared admin folder for every phase and
+category. Re-typing it on every import is pointless friction.
+
+**New design:** Store it once in `AppSettings` (the existing singleton row already used
+for `AdminPendingPath`, `AdminCompletePath`, etc.) as a new field `AdminSourcePath`.
+Admins configure it under **User Management → Admin → Edit** and it pre-fills
+automatically for all imports.
+
+### Affected pieces
+
+| Layer | Change |
+|---|---|
+| `AppSettings` model | Add `AdminSourcePath String(500) NULL` column |
+| `AppSettingsOut` / `UpdateAppSettingsRequest` schemas | Add `admin_source_path` field |
+| `settings.py` router | Read + write `AdminSourcePath` |
+| `imports.py` router | Read `AdminSourcePath` from `AppSettings`; remove `source_root_path` Form param |
+| `csv_import.py` service | `parse_csv_simple` `source_root` arg stays — caller passes the DB value |
+| Import UI (3 dialogs) | Remove the *Source Folder Path* text field entirely |
+| Admin Edit UI (Users page) | Add an *Admin Source Folder* text field (same section as Pending/Complete paths) |
+
+### SQL migration (additive, non-breaking)
+```sql
+ALTER TABLE AppSettings ADD AdminSourcePath NVARCHAR(500) NULL;
+```
+
+---
+
+## Background — File Transfer Bugs
+
+The current file transfer code was written assuming the source is always a **folder**,
+but the real workflow has two distinct phases:
+
+- **Stage 1 (admin → polish)**: Source is a raw `.3dm` **file** in the admin's source folder.
+- **Stage 2+ (stage → stage)**: Source is an `AB200/` **folder** that the worker created and
+  manually placed in their `Complete/` folder.
+
+Additionally the code wrongly tries to do a filesystem copy on `complete_process_assignment`
+and `mark_assignment_failed`, when in reality the **worker moves the folder themselves manually**.
+
+---
+
+## The Real Workflow (source of truth)
+
+```
+Admin Source Folder
+  └── AB200.3dm                ← raw file, imported into DB as FileVersion.SourcePath
+
+[Admin assigns to Polish]
+  → COPY: AB200.3dm → Polish/Pending/AB200.3dm
+  → CurrentPath = Polish/Pending/AB200.3dm
+
+[Worker works]
+  Worker creates: Polish/Pending/AB200/ (folder)
+  Worker puts AB200.3dm + polish files inside
+  Worker manually moves: Polish/Pending/AB200/ → Polish/Complete/AB200/
+
+[Worker clicks Submit in dashboard]
+  → NO filesystem copy — already moved by worker
+  → CurrentPath = Polish/Complete/AB200/   (updated in DB)
+  → Status = Submitted
+
+[Admin approves]
+  → NO filesystem copy — file already in Complete/
+  → Status = Complete
+
+[Admin assigns to GLB]
+  → COPY: Polish/Complete/AB200/ (folder) → GLB/Pending/AB200/ (folder)
+  → CurrentPath = GLB/Pending/AB200/
+
+[Worker marks Failed]
+  → Worker has already put whatever they have in Complete/ manually
+  → NO filesystem copy
+  → CurrentPath = WorkerComplete/AB200/   (updated in DB)
+  → Status = Failed
+
+[Admin reassigns / rejects]
+  → Calls _assign_stage with CurrentPath = WorkerComplete/AB200/ (folder)
+  → COPY: Complete/AB200/ → NewWorker/Pending/AB200/
+```
+
+---
+
+## Bugs Found
+
+### Bug 1 — `shutil.copytree` on a FILE crashes on first assignment
+`_copy_verify_delete` always calls `shutil.copytree(source, dest)`.  
+On first assignment, source is `AB200.3dm` — a FILE, not a directory.  
+`copytree` on a file raises `NotADirectoryError`.
+
+### Bug 2 — `complete_process_assignment` tries to copy files the worker already moved
+`complete_process_assignment` calls `_copy_verify_delete` from `Pending/AB200.3dm`
+to `Complete/AB200`. But:
+- The worker already manually moved the `AB200/` folder to Complete themselves.
+- `CurrentPath` still points to the original `.3dm` file path, not the folder.
+- The copy would fail (file moved) or overwrite the worker's real work folder.
+
+### Bug 3 — Same problem in `mark_assignment_failed`
+Same incorrect copy call as Bug 2 — should not do filesystem copy.
+
+### Bug 4 — `dest_path` always uses `file_record.FileName` (no extension)
+```python
+dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+# → Polish/Pending/AB200    ← missing .3dm extension for first copy
+```
+First assignment copies a `.3dm` file, so dest should be `Polish/Pending/AB200.3dm`.  
+Only folder copies (stage 2+) use the bare name `AB200`.
+
+### Bug 5 — No progress tracking for large file transfers
+The HTTP request blocks until copy completes. For large `.3dm` files this times out
+and gives the user no feedback. Need background transfer + poll endpoint.
+
+### Bug 6 — `AdminSourcePath` not stored; import UIs re-ask for it every time
+The source folder path is never persisted — the import UIs always show an empty field.
+Fixes with Change 0 above.
+
+---
+
+## Proposed Changes
+
+---
+
+### `app/models.py` — `AppSettings` (Change 0)
+
+Add one new nullable column:
+```python
+AdminSourcePath: Mapped[str | None] = mapped_column(String(500), nullable=True)
+```
+This sits alongside the existing `AdminPendingPath` / `AdminCompletePath` fields.
+
+---
+
+### `app/schemas.py` — `AppSettingsOut` + `UpdateAppSettingsRequest` (Change 0)
+
+Add `admin_source_path: str | None` to both schemas.
+
+---
+
+### `app/routers/settings.py` (Change 0)
+
+`_to_settings_out`: include `adminSourcePath`.  
+`update_settings`: write `settings.AdminSourcePath = payload.admin_source_path`.
+
+---
+
+### `app/routers/imports.py` (Change 0)
+
+Remove `source_root_path: str | None = Form(None)` parameter.  
+Instead, read it from the DB at request time:
+```python
+source_root_path = get_or_create_settings(db).AdminSourcePath
+if not source_root_path:
+    raise HTTPException(400, "Admin Source Folder is not configured. Set it in Settings.")
+```
+
+---
+
+### `app/services/file_transfer.py`
+
+#### Fix `_copy_verify_delete` — support file AND folder, run in background thread
+
+```
+Current:  shutil.copytree(source, dest)  ← directory only, synchronous
+
+New:
+  - Detect source type: os.path.isfile() vs os.path.isdir()
+  - File:   shutil.copy2(src, dst_file)  +  file size verification
+  - Folder: shutil.copytree(src, dst_dir) + existing _dir_signature verification
+  - Delete: os.remove() for file, shutil.rmtree() for folder
+  - Runs in a background thread (threading.Thread)
+  - Updates FileTransferLog Step="Copy" Status="InProgress" periodically
+    using a new DB session (SessionLocal) from the thread
+```
+
+#### Fix `_assign_stage` — correct `dest_path` for file vs folder
+
+```python
+# Current (broken):
+dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+# → Polish/Pending/AB200   (wrong for .3dm file copy)
+
+# New:
+if os.path.isfile(source_path):
+    # First assignment: copy the raw file preserving its full name+extension
+    dest_path = os.path.join(worker_path.PendingPath, os.path.basename(source_path))
+    # → Polish/Pending/AB200.3dm
+else:
+    # Stage 2+: copy the whole AB200/ folder
+    dest_path = os.path.join(worker_path.PendingPath, file_record.FileName)
+    # → GLB/Pending/AB200
+```
+
+#### Fix `complete_process_assignment` — remove filesystem copy
+
+```
+Current:  _copy_verify_delete(Pending/AB200.3dm → Complete/AB200)   ← WRONG
+
+New:
+  - NO filesystem copy
+  - Compute expected path: Complete/AB200/  (worker_path.CompletePath / FileName)
+  - Check os.path.isdir(expected) — warn if folder not found (worker hasn't moved it yet)
+  - Update CurrentPath = Complete/AB200/
+  - Update status = Submitted
+```
+
+#### Fix `mark_assignment_failed` — remove filesystem copy
+
+```
+Current:  _copy_verify_delete(Pending/AB200.3dm → Complete/AB200)   ← WRONG
+
+New:
+  - NO filesystem copy
+  - Compute expected path: Complete/AB200/
+  - Warn if folder not found
+  - Update CurrentPath = Complete/AB200/
+  - Update status = Failed
+```
+
+> [!NOTE]
+> `reopen_process_assignment` KEEPS its filesystem copy because it moves the folder
+> back from Complete → Pending (undo a mistaken Submit). This is app-driven, not worker-driven.
+> It just needs to use the fixed `_copy_verify_delete` that handles folders correctly.
+
+#### Add background transfer management
+
+```python
+# In-module dict to track running transfers
+_active_transfers: dict[int, threading.Thread] = {}   # assignment_id → thread
+
+def _run_transfer_bg(assignment_id, source, dest, ...):
+    """Runs in a thread. Opens its own DB session. Updates FileTransferLog."""
+    ...
+
+def get_transfer_status(db, assignment_id) -> dict:
+    """Returns latest FileTransferLog step/status for polling."""
+    ...
+```
+
+---
+
+### `app/models.py` — `FileTransferLog` progress columns
+
+Add `BytesCopied` and `TotalBytes` columns to support progress percentage.
+These are nullable so existing rows are unaffected.
+
+```python
+BytesCopied: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+TotalBytes:  Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+```
+
+---
+
+### `app/routers/assignments.py` (or `admin.py`)
+
+#### [NEW] `GET /api/assignments/{assignment_id}/transfer-status`
+
+Returns:
+```json
+{
+  "status": "InProgress" | "Success" | "Failed" | "Queued",
+  "step": "Copy" | "Verify" | "Delete",
+  "bytes_copied": 1234567,
+  "total_bytes": 9000000,
+  "progress_pct": 13,
+  "error": null
+}
+```
+
+Frontend polls this every 2 seconds until `status = "Success"` or `"Failed"`.
+
+---
+
+### `sql/` — migration patch
+
+```sql
+-- Change 0: global admin source folder
+ALTER TABLE AppSettings ADD AdminSourcePath NVARCHAR(500) NULL;
+
+-- File transfer progress tracking
+ALTER TABLE FileTransferLog ADD BytesCopied BIGINT NULL;
+ALTER TABLE FileTransferLog ADD TotalBytes  BIGINT NULL;
+```
+
+All additive — existing rows get NULL, no data loss, safe to run on a live DB.
+
+---
+
+### Frontend — Admin Edit (Users page) (Change 0)
+
+In the admin user edit modal, add an **Admin Source Folder** text-input field  
+(same section as `AdminPendingPath` / `AdminCompletePath`).  
+Reads from `GET /api/admin/settings`, saves via `PUT /api/admin/settings`.
+
+### Frontend — Import dialogs (Change 0)
+
+Remove the *Source Folder Path* input from all three import dialogs:  
+*Manual Entry*, *CSV Import*, *Full CSV Import*.  
+If `AdminSourcePath` is not yet configured, show an inline warning with a link  
+to the Admin settings instead of blocking the whole dialog.
+
+### Frontend — `assign` action polling
+
+After admin clicks Assign:
+- API returns `{ assignment_id, dest_path, status: "Transferring" }` immediately
+- Frontend shows a progress bar / spinner
+- Polls `GET /api/assignments/{id}/transfer-status` every 2 seconds
+- On `Success`: refresh file grid, show success toast
+- On `Failed`: show error with message
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **Q1 — Submit without folder check?**
+> When worker clicks Submit, should the app block if `Complete/AB200/` folder doesn't
+> exist on disk, or should it just warn and allow submission anyway?  
+> (Worker might be on a different machine where the path isn't visible to the server.)
+
+> [!IMPORTANT]
+> **Q2 — File name format in import: does the CSV list `AB200` or `AB200.3dm`?**  
+> Currently `parse_csv_simple` builds `source_path = os.path.join(source_root, file_name)` —
+> so `file_name` needs to include the `.3dm` extension for the path to be correct.  
+> Does the admin type `AB200.3dm` in the manual entry / CSV, or just `AB200`?
+
+> [!IMPORTANT]
+> **Q3 — reopen flow: should the folder move be app-driven or worker-driven?**  
+> Currently `reopen_process_assignment` copies `Complete/AB200/ → Pending/AB200/` automatically.  
+> Should this stay app-driven (convenient), or should the worker move it back manually
+> (consistent with the submit/fail pattern)?
+
+---
+
+## Verification Plan
+
+### Manual Tests
+1. Import `AB200` with source `D:\admin\AB200.3dm` → assign to Polish → verify `Polish/Pending/AB200.3dm` exists on disk.
+2. Worker creates `AB200/` folder in Pending, puts files, manually moves to Complete. Click Submit → verify DB shows `Submitted`, `CurrentPath = Polish/Complete/AB200/`.
+3. Admin approves → verify DB shows `Complete`. Assign to GLB → verify `GLB/Pending/AB200/` folder copied.
+4. Test fail flow: worker marks failed → verify `CurrentPath = Polish/Complete/AB200/`, no extra copy.
+5. Test reject flow: admin rejects → folder copies from Complete to same/new worker Pending.
+6. Transfer status polling: assign a large file → verify frontend shows progress bar updating.
+
+### Automated
+- Run existing tests (if any) to check no regressions on the DB-only paths (approve, status updates).

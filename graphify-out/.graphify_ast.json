@@ -1,0 +1,4846 @@
+{
+  "nodes": [
+    {
+      "id": "app_init",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "app/__init__.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_database",
+      "label": "database.py",
+      "file_type": "code",
+      "source_file": "app/database.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_database_get_db",
+      "label": "get_db()",
+      "file_type": "code",
+      "source_file": "app/database.py",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_init",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "app/routers/__init__.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin",
+      "label": "admin.py",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_set_file_active",
+      "label": "set_file_active()",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "setactiverequest",
+      "label": "SetActiveRequest",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_admin_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_admin_py_session",
+      "label": "Session",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_delete_file",
+      "label": "delete_file()",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L43",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_assign",
+      "label": "assign()",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "_origin": "ast"
+    },
+    {
+      "id": "assignrequest",
+      "label": "AssignRequest",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_move_category",
+      "label": "move_category()",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "_origin": "ast"
+    },
+    {
+      "id": "movecategoryrequest",
+      "label": "MoveCategoryRequest",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_move_phase",
+      "label": "move_phase()",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "_origin": "ast"
+    },
+    {
+      "id": "movephaserequest",
+      "label": "MovePhaseRequest",
+      "file_type": "code",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_rationale_32",
+      "label": "Deactivating hides nothing on disk and keeps all history - it just marks     the",
+      "file_type": "rationale",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L32",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_rationale_48",
+      "label": "Hard delete - only allowed once nothing is actively in flight for this     file.",
+      "file_type": "rationale",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L48",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_rationale_101",
+      "label": "Reclassifies selected files' Category/Sub-Category. Pure metadata - no     physi",
+      "file_type": "rationale",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L101",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_admin_rationale_130",
+      "label": "Reclassifies selected files' Phase. Unlike Category/Sub-Category this has     a",
+      "file_type": "rationale",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L130",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_audit_trail",
+      "label": "audit_trail.py",
+      "file_type": "code",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_audit_trail_list_audit_trail",
+      "label": "list_audit_trail()",
+      "file_type": "code",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "audittrailfilterparams",
+      "label": "AuditTrailFilterParams",
+      "file_type": "code",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_audit_trail_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_audit_trail_py_session",
+      "label": "Session",
+      "file_type": "code",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem",
+      "label": "filesystem.py",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_folderentry",
+      "label": "FolderEntry",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_browsefoldersout",
+      "label": "BrowseFoldersOut",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_local_drive_roots",
+      "label": "_local_drive_roots()",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_list_shares",
+      "label": "_list_shares()",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L39",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_browse_folders",
+      "label": "browse_folders()",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L80",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_filesystem_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L80",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_rationale_40",
+      "label": "A bare `\\\\host` isn't itself an openable directory on Windows - you can     only",
+      "file_type": "rationale",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L40",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_filesystem_rationale_84",
+      "label": "Lists subfolders under `path` so an admin can pick a source folder by     clicki",
+      "file_type": "rationale",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L84",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_lookups",
+      "label": "lookups.py",
+      "file_type": "code",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_lookups_get_lookups",
+      "label": "get_lookups()",
+      "file_type": "code",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_lookups_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_lookups_py_session",
+      "label": "Session",
+      "file_type": "code",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_lookups_rationale_15",
+      "label": "Id -> name tables the frontend needs to render Phase/Status/Category     columns",
+      "file_type": "rationale",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types",
+      "label": "process_types.py",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types_list_process_types",
+      "label": "list_process_types()",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_process_types_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_process_types_py_session",
+      "label": "Session",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types_create_process_type",
+      "label": "create_process_type()",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "_origin": "ast"
+    },
+    {
+      "id": "createprocesstyperequest",
+      "label": "CreateProcessTypeRequest",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types_update_process_type",
+      "label": "update_process_type()",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_process_types_py_updatetaxonomynoderequest",
+      "label": "UpdateTaxonomyNodeRequest",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types_reorder_process_types",
+      "label": "reorder_process_types()",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "_origin": "ast"
+    },
+    {
+      "id": "reorderprocesstypesrequest",
+      "label": "ReorderProcessTypesRequest",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_process_types_delete_process_type",
+      "label": "delete_process_type()",
+      "file_type": "code",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L111",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy",
+      "label": "taxonomy.py",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_get_taxonomy",
+      "label": "get_taxonomy()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_taxonomy_py_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_taxonomy_py_session",
+      "label": "Session",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_create_phase",
+      "label": "create_phase()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "_origin": "ast"
+    },
+    {
+      "id": "createphaserequest",
+      "label": "CreatePhaseRequest",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_update_phase",
+      "label": "update_phase()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_routers_taxonomy_py_updatetaxonomynoderequest",
+      "label": "UpdateTaxonomyNodeRequest",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_delete_phase",
+      "label": "delete_phase()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L135",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_create_category",
+      "label": "create_category()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "_origin": "ast"
+    },
+    {
+      "id": "createcategoryrequest",
+      "label": "CreateCategoryRequest",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_update_category",
+      "label": "update_category()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L182",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_delete_category",
+      "label": "delete_category()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L207",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_create_subcategory",
+      "label": "create_subcategory()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "_origin": "ast"
+    },
+    {
+      "id": "createsubcategoryrequest",
+      "label": "CreateSubCategoryRequest",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_update_subcategory",
+      "label": "update_subcategory()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L247",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_delete_subcategory",
+      "label": "delete_subcategory()",
+      "file_type": "code",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L272",
+      "_origin": "ast"
+    },
+    {
+      "id": "routers_taxonomy_rationale_29",
+      "label": "Full Phase/Category/Sub-Category listing for the admin taxonomy panel -     unli",
+      "file_type": "rationale",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L29",
+      "_origin": "ast"
+    },
+    {
+      "id": "services_init",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "app/services/__init__.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc",
+      "label": ".oxlintrc.json",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc_schema",
+      "label": "$schema",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc_plugins",
+      "label": "plugins",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc_rules",
+      "label": "rules",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_rules_of_hooks",
+      "label": "react/rules-of-hooks",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_oxlintrc_rules_react_only_export_components",
+      "label": "react/only-export-components",
+      "file_type": "code",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_type",
+      "label": "type",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_scripts_lint",
+      "label": "lint",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_scripts_preview",
+      "label": "preview",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_ag_grid_community",
+      "label": "ag-grid-community",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_ag_grid_react",
+      "label": "ag-grid-react",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_react",
+      "label": "react",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_react_dom",
+      "label": "react-dom",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_react_router_dom",
+      "label": "react-router-dom",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_dependencies_recharts",
+      "label": "recharts",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies_types_react",
+      "label": "@types/react",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies_types_react_dom",
+      "label": "@types/react-dom",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies_vitejs_plugin_react",
+      "label": "@vitejs/plugin-react",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies_oxlint",
+      "label": "oxlint",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "frontend_package_devdependencies_vite",
+      "label": "vite",
+      "file_type": "code",
+      "source_file": "frontend/package.json",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "pkg_project_management_tool",
+      "label": "project-management-tool",
+      "file_type": "code",
+      "type": "package",
+      "ecosystem": "python",
+      "source_file": "pyproject.toml",
+      "source_location": "L1",
+      "version": "0.1.0",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_app",
+      "label": "App",
+      "file_type": "code",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L28",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_gettoken",
+      "label": "getToken",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_settoken",
+      "label": "setToken",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getusername",
+      "label": "getUsername",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_login",
+      "label": "login",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L61",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getme",
+      "label": "getMe",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L89",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_logout",
+      "label": "logout",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L93",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_decodejwt",
+      "label": "decodeJwt",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L98",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getlookups",
+      "label": "getLookups",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L108",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getusers",
+      "label": "getUsers",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L112",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_createuser",
+      "label": "createUser",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L116",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_updateuser",
+      "label": "updateUser",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L120",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_adminresetpassword",
+      "label": "adminResetPassword",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L124",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deleteuser",
+      "label": "deleteUser",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L128",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setuseractive",
+      "label": "setUserActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L132",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_changepassword",
+      "label": "changePassword",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L136",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getfiles",
+      "label": "getFiles",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L149",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_assignfile",
+      "label": "assignFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L158",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_resetfile",
+      "label": "resetFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L165",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_revokefile",
+      "label": "revokeFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L169",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_reopenfile",
+      "label": "reopenFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L173",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_approvefile",
+      "label": "approveFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L177",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_rejectfile",
+      "label": "rejectFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L181",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setfileactive",
+      "label": "setFileActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L188",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deletefile",
+      "label": "deleteFile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L192",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_completeassignment",
+      "label": "completeAssignment",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L196",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_failassignment",
+      "label": "failAssignment",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L200",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getprocesshistory",
+      "label": "getProcessHistory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L204",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_previewimport",
+      "label": "previewImport",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L208",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_commitimport",
+      "label": "commitImport",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L221",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_movecategory",
+      "label": "moveCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L226",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_movephase",
+      "label": "movePhase",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L233",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_createphase",
+      "label": "createPhase",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L240",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_createcategory",
+      "label": "createCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L244",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deletecategory",
+      "label": "deleteCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L248",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_createsubcategory",
+      "label": "createSubCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L252",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deletesubcategory",
+      "label": "deleteSubCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L256",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_gettaxonomyadmin",
+      "label": "getTaxonomyAdmin",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L260",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_browsefolders",
+      "label": "browseFolders",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L264",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setphaseactive",
+      "label": "setPhaseActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L269",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_renamephase",
+      "label": "renamePhase",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L273",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deletephase",
+      "label": "deletePhase",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L277",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setcategoryactive",
+      "label": "setCategoryActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L281",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_renamecategory",
+      "label": "renameCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L285",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setsubcategoryactive",
+      "label": "setSubCategoryActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L289",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_renamesubcategory",
+      "label": "renameSubCategory",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L293",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getprocesstypes",
+      "label": "getProcessTypes",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L297",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_createprocesstype",
+      "label": "createProcessType",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L301",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setprocesstypeactive",
+      "label": "setProcessTypeActive",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L305",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_renameprocesstype",
+      "label": "renameProcessType",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L309",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_reorderprocesstypes",
+      "label": "reorderProcessTypes",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L313",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deleteprocesstype",
+      "label": "deleteProcessType",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L317",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getaudittrail",
+      "label": "getAuditTrail",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L321",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getcalendarmonth",
+      "label": "getCalendarMonth",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L330",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getcalendarday",
+      "label": "getCalendarDay",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L334",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getcompletionsreport",
+      "label": "getCompletionsReport",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L338",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_gettaxonomyprogressreport",
+      "label": "getTaxonomyProgressReport",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L345",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getrepairsreport",
+      "label": "getRepairsReport",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L349",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getreportsdetail",
+      "label": "getReportsDetail",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L356",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getnotifications",
+      "label": "getNotifications",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L363",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_marknotificationread",
+      "label": "markNotificationRead",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L367",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_markallnotificationsread",
+      "label": "markAllNotificationsRead",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L371",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getadminworkboard",
+      "label": "getAdminWorkboard",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L375",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_exportreportexcel",
+      "label": "exportReportExcel",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L426",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_exportreportpdf",
+      "label": "exportReportPdf",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L431",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getworkerprocesspaths",
+      "label": "getWorkerProcessPaths",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L436",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_setworkerprocesspaths",
+      "label": "setWorkerProcessPaths",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L440",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_updatepriority",
+      "label": "updatePriority",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L444",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getsettings",
+      "label": "getSettings",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L448",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_updatesettings",
+      "label": "updateSettings",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L452",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getprofile",
+      "label": "getProfile",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L465",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_updateavailability",
+      "label": "updateAvailability",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L469",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getmyleave",
+      "label": "getMyLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L473",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_addmyleave",
+      "label": "addMyLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L477",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_cancelmyleave",
+      "label": "cancelMyLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L481",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_getuserleave",
+      "label": "getUserLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L485",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_adduserleave",
+      "label": "addUserLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L489",
+      "_origin": "ast"
+    },
+    {
+      "id": "api_client_deleteuserleave",
+      "label": "deleteUserLeave",
+      "file_type": "code",
+      "source_file": "frontend/src/api/client.js",
+      "source_location": "L496",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_assignmodal_assignmodal",
+      "label": "AssignModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/AssignModal.jsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_changepasswordmodal_changepasswordmodal",
+      "label": "ChangePasswordModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/ChangePasswordModal.jsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_comboselect_comboselect",
+      "label": "ComboSelect",
+      "file_type": "code",
+      "source_file": "frontend/src/components/ComboSelect.jsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_createusermodal_createusermodal",
+      "label": "CreateUserModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/CreateUserModal.jsx",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_daterangecalendar_daterangecalendar",
+      "label": "DateRangeCalendar",
+      "file_type": "code",
+      "source_file": "frontend/src/components/DateRangeCalendar.jsx",
+      "source_location": "L53",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_editusermodal_editusermodal",
+      "label": "EditUserModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/EditUserModal.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_failassignmentmodal_failassignmentmodal",
+      "label": "FailAssignmentModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/FailAssignmentModal.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_filehistorymodal_filehistorymodal",
+      "label": "FileHistoryModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/FileHistoryModal.jsx",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_filesgrid_filesgrid",
+      "label": "FilesGrid",
+      "file_type": "code",
+      "source_file": "frontend/src/components/FilesGrid.jsx",
+      "source_location": "L79",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_filterbar_filterbar",
+      "label": "FilterBar",
+      "file_type": "code",
+      "source_file": "frontend/src/components/FilterBar.jsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_folderbrowsermodal_folderbrowsermodal",
+      "label": "FolderBrowserModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/FolderBrowserModal.jsx",
+      "source_location": "L61",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_importmodal_importmodal",
+      "label": "ImportModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/ImportModal.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_modal_modal",
+      "label": "Modal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/Modal.jsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_movefilesmodal_movefilesmodal",
+      "label": "MoveFilesModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/MoveFilesModal.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_notificationbell_notificationbell",
+      "label": "NotificationBell",
+      "file_type": "code",
+      "source_file": "frontend/src/components/NotificationBell.jsx",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_rejectmodal_rejectmodal",
+      "label": "RejectModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/RejectModal.jsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_resetpasswordmodal_resetpasswordmodal",
+      "label": "ResetPasswordModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/ResetPasswordModal.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_rolecheckboxgroup_rolecheckboxgroup",
+      "label": "RoleCheckboxGroup",
+      "file_type": "code",
+      "source_file": "frontend/src/components/RoleCheckboxGroup.jsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_searchbox_searchbox",
+      "label": "SearchBox",
+      "file_type": "code",
+      "source_file": "frontend/src/components/SearchBox.jsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "components_sidebar_sidebar",
+      "label": "Sidebar",
+      "file_type": "code",
+      "source_file": "frontend/src/components/Sidebar.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_comparisonpiechart_comparisonpiechart",
+      "label": "ComparisonPieChart",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/ComparisonPieChart.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_exportreportmodal_exportreportmodal",
+      "label": "ExportReportModal",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/ExportReportModal.jsx",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_monthbarchart_monthbarchart",
+      "label": "MonthBarChart",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/MonthBarChart.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_taxonomycompletionpie_taxonomycompletionpie",
+      "label": "TaxonomyCompletionPie",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/TaxonomyCompletionPie.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_weekbarchart_weekbarchart",
+      "label": "WeekBarChart",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/WeekBarChart.jsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_workedfilestable_workedfilestable",
+      "label": "WorkedFilesTable",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/WorkedFilesTable.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_chartcolors_useisdarkmode",
+      "label": "useIsDarkMode",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/chartColors.js",
+      "source_location": "L31",
+      "_origin": "ast"
+    },
+    {
+      "id": "reports_chartcolors_usecharttheme",
+      "label": "useChartTheme",
+      "file_type": "code",
+      "source_file": "frontend/src/components/reports/chartColors.js",
+      "source_location": "L35",
+      "_origin": "ast"
+    },
+    {
+      "id": "context_authcontext_authprovider",
+      "label": "AuthProvider",
+      "file_type": "code",
+      "source_file": "frontend/src/context/AuthContext.jsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "context_authcontext_useauth",
+      "label": "useAuth",
+      "file_type": "code",
+      "source_file": "frontend/src/context/AuthContext.jsx",
+      "source_location": "L77",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_audittrailpage_audittrailpage",
+      "label": "AuditTrailPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/AuditTrailPage.jsx",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_browsefilespage_browsefilespage",
+      "label": "BrowseFilesPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_calendarpage_calendarpage",
+      "label": "CalendarPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/CalendarPage.jsx",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_dashboardpage_dashboardpage",
+      "label": "DashboardPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_loginpage_loginpage",
+      "label": "LoginPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/LoginPage.jsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_processtypespage_processtypespage",
+      "label": "ProcessTypesPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/ProcessTypesPage.jsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_profilepage_profilepage",
+      "label": "ProfilePage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/ProfilePage.jsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_reportspage_reportspage",
+      "label": "ReportsPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_taxonomypage_taxonomypage",
+      "label": "TaxonomyPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/TaxonomyPage.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_userspage_userspage",
+      "label": "UsersPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/UsersPage.jsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "pages_workboardpage_workboardpage",
+      "label": "WorkboardPage",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/WorkboardPage.jsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "utils_eligibleworkers_eligibleworkers",
+      "label": "eligibleWorkers",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/eligibleWorkers.js",
+      "source_location": "L4",
+      "_origin": "ast"
+    }
+  ],
+  "edges": [
+    {
+      "source": "app_database",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/database.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "app_database",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/database.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "app_database",
+      "target": "app_config",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/database.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "app_database",
+      "target": "app_database_get_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/database.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "sqlalchemy_exc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_services_file_transfer",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "routers_admin_set_file_active",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_set_file_active",
+      "target": "setactiverequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_set_file_active",
+      "target": "app_routers_admin_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_set_file_active",
+      "target": "app_routers_admin_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "routers_admin_delete_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_delete_file",
+      "target": "app_routers_admin_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_delete_file",
+      "target": "app_routers_admin_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "routers_admin_assign",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_assign",
+      "target": "assignrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_assign",
+      "target": "app_routers_admin_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_assign",
+      "target": "app_routers_admin_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "routers_admin_move_category",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_category",
+      "target": "movecategoryrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_category",
+      "target": "app_routers_admin_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_category",
+      "target": "app_routers_admin_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "routers_admin_move_phase",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_phase",
+      "target": "movephaserequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_phase",
+      "target": "app_routers_admin_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_move_phase",
+      "target": "app_routers_admin_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_rationale_32",
+      "target": "routers_admin_set_file_active",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_rationale_48",
+      "target": "routers_admin_delete_file",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_rationale_101",
+      "target": "routers_admin_move_category",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin_rationale_130",
+      "target": "routers_admin_move_phase",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "app_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "routers_audit_trail_list_audit_trail",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail_list_audit_trail",
+      "target": "audittrailfilterparams",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail_list_audit_trail",
+      "target": "app_routers_audit_trail_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail_list_audit_trail",
+      "target": "app_routers_audit_trail_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "string",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "subprocess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "routers_filesystem_folderentry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_folderentry",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "routers_filesystem_browsefoldersout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browsefoldersout",
+      "target": "basemodel",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "routers_filesystem_local_drive_roots",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_local_drive_roots",
+      "target": "routers_filesystem_folderentry",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "routers_filesystem_list_shares",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_list_shares",
+      "target": "routers_filesystem_folderentry",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem",
+      "target": "routers_filesystem_browse_folders",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browse_folders",
+      "target": "app_routers_filesystem_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_local_drive_roots",
+      "target": "routers_filesystem_folderentry",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_list_shares",
+      "target": "routers_filesystem_folderentry",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browse_folders",
+      "target": "routers_filesystem_browsefoldersout",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browse_folders",
+      "target": "routers_filesystem_local_drive_roots",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browse_folders",
+      "target": "routers_filesystem_list_shares",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_browse_folders",
+      "target": "routers_filesystem_folderentry",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_rationale_40",
+      "target": "routers_filesystem_list_shares",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_filesystem_rationale_84",
+      "target": "routers_filesystem_browse_folders",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/filesystem.py",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "app_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "routers_lookups_get_lookups",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups_get_lookups",
+      "target": "app_routers_lookups_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups_get_lookups",
+      "target": "app_routers_lookups_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups_rationale_15",
+      "target": "routers_lookups_get_lookups",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "sqlalchemy_exc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "app_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "routers_process_types_list_process_types",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_list_process_types",
+      "target": "app_routers_process_types_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_list_process_types",
+      "target": "app_routers_process_types_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "routers_process_types_create_process_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_create_process_type",
+      "target": "createprocesstyperequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_create_process_type",
+      "target": "app_routers_process_types_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_create_process_type",
+      "target": "app_routers_process_types_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "routers_process_types_update_process_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_update_process_type",
+      "target": "app_routers_process_types_py_updatetaxonomynoderequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_update_process_type",
+      "target": "app_routers_process_types_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_update_process_type",
+      "target": "app_routers_process_types_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "routers_process_types_reorder_process_types",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_reorder_process_types",
+      "target": "reorderprocesstypesrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_reorder_process_types",
+      "target": "app_routers_process_types_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_reorder_process_types",
+      "target": "app_routers_process_types_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "routers_process_types_delete_process_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_delete_process_type",
+      "target": "app_routers_process_types_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types_delete_process_type",
+      "target": "app_routers_process_types_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "sqlalchemy_exc",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "sqlalchemy_orm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "app_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "app_schemas",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "app_security",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_get_taxonomy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_get_taxonomy",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_get_taxonomy",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_create_phase",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_phase",
+      "target": "createphaserequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_phase",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_phase",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_update_phase",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_phase",
+      "target": "app_routers_taxonomy_py_updatetaxonomynoderequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_phase",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_phase",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_delete_phase",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_phase",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_phase",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L135",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_create_category",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_category",
+      "target": "createcategoryrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_category",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_category",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_update_category",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_category",
+      "target": "app_routers_taxonomy_py_updatetaxonomynoderequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_category",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_category",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_delete_category",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_category",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_category",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L207",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_create_subcategory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_subcategory",
+      "target": "createsubcategoryrequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_subcategory",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_create_subcategory",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_update_subcategory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L247",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_subcategory",
+      "target": "app_routers_taxonomy_py_updatetaxonomynoderequest",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L247",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_subcategory",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L247",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_update_subcategory",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L247",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "routers_taxonomy_delete_subcategory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_subcategory",
+      "target": "app_routers_taxonomy_py_user",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_delete_subcategory",
+      "target": "app_routers_taxonomy_py_session",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy_rationale_29",
+      "target": "routers_taxonomy_get_taxonomy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc",
+      "target": "frontend_oxlintrc_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc",
+      "target": "frontend_oxlintrc_plugins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_react",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc_plugins",
+      "target": "ref_oxc",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_oxlintrc",
+      "target": "frontend_oxlintrc_rules",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_rules_of_hooks",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules",
+      "target": "frontend_oxlintrc_rules_react_only_export_components",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_oxlintrc_rules_react_only_export_components",
+      "target": "ref_warn",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/.oxlintrc.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_type",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_scripts",
+      "target": "frontend_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_scripts",
+      "target": "frontend_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_scripts",
+      "target": "frontend_package_scripts_lint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_scripts",
+      "target": "frontend_package_scripts_preview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_ag_grid_community",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_ag_grid_community",
+      "target": "ag_grid_community",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_ag_grid_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_ag_grid_react",
+      "target": "ag_grid_react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_react",
+      "target": "react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_react_dom",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_react_dom",
+      "target": "react_dom",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_react_router_dom",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_react_router_dom",
+      "target": "react_router_dom",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_dependencies",
+      "target": "frontend_package_dependencies_recharts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_dependencies_recharts",
+      "target": "recharts",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package",
+      "target": "frontend_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies",
+      "target": "frontend_package_devdependencies_types_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies_types_react",
+      "target": "types_react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_devdependencies",
+      "target": "frontend_package_devdependencies_types_react_dom",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies_types_react_dom",
+      "target": "types_react_dom",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_devdependencies",
+      "target": "frontend_package_devdependencies_vitejs_plugin_react",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies_vitejs_plugin_react",
+      "target": "vitejs_plugin_react",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_devdependencies",
+      "target": "frontend_package_devdependencies_oxlint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies_oxlint",
+      "target": "oxlint",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "frontend_package_devdependencies",
+      "target": "frontend_package_devdependencies_vite",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_package_devdependencies_vite",
+      "target": "vite",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/package.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "src_app",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_loginpage_loginpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_dashboardpage_dashboardpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_browsefilespage_browsefilespage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_userspage_userspage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_taxonomypage_taxonomypage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_processtypespage_processtypespage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_audittrailpage_audittrailpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_calendarpage_calendarpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_reportspage_reportspage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_workboardpage_workboardpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app",
+      "target": "pages_profilepage_profilepage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "components_assignmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/AssignModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_assignmodal",
+      "target": "utils_eligibleworkers_eligibleworkers",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/AssignModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_changepasswordmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ChangePasswordModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_changepasswordmodal",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ChangePasswordModal.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_createusermodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/CreateUserModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_createusermodal",
+      "target": "components_rolecheckboxgroup_rolecheckboxgroup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/CreateUserModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_editusermodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/EditUserModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_editusermodal",
+      "target": "components_folderbrowsermodal_folderbrowsermodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/EditUserModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_editusermodal",
+      "target": "components_rolecheckboxgroup_rolecheckboxgroup",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/EditUserModal.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_failassignmentmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/FailAssignmentModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_filehistorymodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/FileHistoryModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_filesgrid",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/FilesGrid.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "components_filterbar",
+      "target": "components_searchbox_searchbox",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/FilterBar.jsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "components_folderbrowsermodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/FolderBrowserModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_importmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ImportModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_importmodal",
+      "target": "components_folderbrowsermodal_folderbrowsermodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ImportModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_importmodal",
+      "target": "components_comboselect_comboselect",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ImportModal.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_movefilesmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/MoveFilesModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_notificationbell",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/NotificationBell.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_rejectmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/RejectModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_rejectmodal",
+      "target": "utils_eligibleworkers_eligibleworkers",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/RejectModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_resetpasswordmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/ResetPasswordModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "components_sidebar",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/Sidebar.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "components_sidebar",
+      "target": "components_changepasswordmodal_changepasswordmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/Sidebar.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "components_sidebar",
+      "target": "components_notificationbell_notificationbell",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/Sidebar.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_comparisonpiechart",
+      "target": "reports_chartcolors_usecharttheme",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/ComparisonPieChart.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_exportreportmodal",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/ExportReportModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_exportreportmodal",
+      "target": "components_daterangecalendar_daterangecalendar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/ExportReportModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_monthbarchart",
+      "target": "reports_chartcolors_usecharttheme",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/MonthBarChart.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_taxonomycompletionpie",
+      "target": "reports_chartcolors_useisdarkmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/TaxonomyCompletionPie.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "reports_weekbarchart",
+      "target": "reports_chartcolors_usecharttheme",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/reports/WeekBarChart.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "src_app_app",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/main.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "context_authcontext_authprovider",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/main.jsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_audittrailpage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/AuditTrailPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_browsefilespage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_browsefilespage",
+      "target": "components_filesgrid_filesgrid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_browsefilespage",
+      "target": "components_searchbox_searchbox",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_browsefilespage",
+      "target": "components_filehistorymodal_filehistorymodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_browsefilespage",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/BrowseFilesPage.jsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_calendarpage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/CalendarPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_calendarpage",
+      "target": "components_modal_modal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/CalendarPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_filterbar_filterbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_filesgrid_filesgrid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_assignmodal_assignmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_failassignmentmodal_failassignmentmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_rejectmodal_rejectmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_filehistorymodal_filehistorymodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_importmodal_importmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "components_movefilesmodal_movefilesmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_dashboardpage",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/DashboardPage.jsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_loginpage",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/LoginPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_processtypespage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ProcessTypesPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_profilepage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ProfilePage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "components_daterangecalendar_daterangecalendar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "reports_monthbarchart_monthbarchart",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "reports_comparisonpiechart_comparisonpiechart",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "reports_taxonomycompletionpie_taxonomycompletionpie",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "reports_workedfilestable_workedfilestable",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "reports_exportreportmodal_exportreportmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_reportspage",
+      "target": "context_authcontext_useauth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/ReportsPage.jsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_taxonomypage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/TaxonomyPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_userspage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/UsersPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_userspage",
+      "target": "components_createusermodal_createusermodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/UsersPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_userspage",
+      "target": "components_editusermodal_editusermodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/UsersPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_userspage",
+      "target": "components_resetpasswordmodal_resetpasswordmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/UsersPage.jsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_workboardpage",
+      "target": "components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/WorkboardPage.jsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_workboardpage",
+      "target": "components_rejectmodal_rejectmodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/WorkboardPage.jsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_workboardpage",
+      "target": "components_folderbrowsermodal_folderbrowsermodal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/WorkboardPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_admin",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/admin.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_assignments",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/assignments.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_audit_trail",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/audit_trail.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_auth",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/auth.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_calendar",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/calendar.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_dashboard",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/dashboard.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_imports",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/imports.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_lookups",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/lookups.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_notifications",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/notifications.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_process_types",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/process_types.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_profile",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/profile.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_reports",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/reports.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_settings",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/settings.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_taxonomy",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/taxonomy.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_users",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/users.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "routers_workboard",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/routers/workboard.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "app_security",
+      "target": "app_database_get_db",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/security.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_admin",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_assignments",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_audit_trail",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_auth",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_calendar",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_dashboard",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_filesystem",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_imports",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_lookups",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_notifications",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_process_types",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_profile",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_reports",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_settings",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_taxonomy",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_users",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "routers_workboard",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/main.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_protectedroute",
+      "target": "context_authcontext_useauth",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_adminroute",
+      "target": "context_authcontext_useauth",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
