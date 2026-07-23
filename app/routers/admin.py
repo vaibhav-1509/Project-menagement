@@ -11,11 +11,13 @@ from app.models import (
     FileTransferLog,
     FileVersion,
     Phase,
+    ProcessType,
     SubCategory,
     TaskAssignment,
     User,
+    WorkerProcessPath,
 )
-from app.schemas import AssignRequest, MoveCategoryRequest, MovePhaseRequest, SetActiveRequest
+from app.schemas import AssignRequest, BulkAssignRequest, MoveCategoryRequest, MovePhaseRequest, SetActiveRequest
 from app.security import require_admin
 from app.services.file_transfer import FileLockedError, TransferVerificationError, assign_file_process
 
@@ -90,6 +92,103 @@ def assign(
         raise HTTPException(status_code=502, detail=f"Filesystem error: {exc}") from exc
 
     return {"assignment_id": result.assignment_id, "dest_path": result.dest_path, "warning": result.warning}
+
+
+@router.post("/bulk-assign")
+def bulk_assign(
+    request: BulkAssignRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Assign multiple files to the same worker for the same process type.
+    Each file is validated individually - files with active assignments,
+    already-complete stages, or missing worker paths are skipped with reasons."""
+    if not request.file_ids:
+        raise HTTPException(status_code=400, detail="No file IDs provided")
+
+    # Validate user and process type once
+    target_user = db.get(User, request.user_id)
+    if target_user is None or not target_user.IsActive:
+        raise HTTPException(status_code=400, detail="Target user not found or inactive")
+
+    process_type = db.get(ProcessType, request.process_type_id)
+    if process_type is None or not process_type.IsActive:
+        raise HTTPException(status_code=400, detail="Unknown or inactive process type")
+
+    worker_path = db.scalar(
+        select(WorkerProcessPath).where(
+            WorkerProcessPath.UserID == request.user_id,
+            WorkerProcessPath.ProcessTypeID == request.process_type_id,
+            WorkerProcessPath.IsActive == True,  # noqa: E712
+        )
+    )
+    if worker_path is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{target_user.Username} is not enabled for {process_type.ProcessTypeName}, or their Pending/Complete folders are not configured",
+        )
+
+    # Check for files with active assignments for this process type
+    active_file_ids = {
+        row[0]
+        for row in db.execute(
+            select(TaskAssignment.FileID).where(
+                TaskAssignment.FileID.in_(request.file_ids),
+                TaskAssignment.ProcessTypeID == request.process_type_id,
+                TaskAssignment.IsActive == True,  # noqa: E712
+            )
+        ).all()
+    }
+
+    complete_status_id = _status_id(db, "Complete")
+    updated, skipped = 0, []
+
+    for file_id in request.file_ids:
+        file_record = db.get(FileRecord, file_id)
+        if file_record is None:
+            skipped.append({"file_id": file_id, "reason": "File not found"})
+            continue
+        if file_id in active_file_ids:
+            skipped.append({"file_id": file_id, "reason": "Has an active assignment for this stage - reset it first"})
+            continue
+
+        # Check if stage is already Complete
+        stage_status = db.scalar(
+            select(FileProcessStatus).where(
+                FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == request.process_type_id
+            )
+        )
+        if stage_status is not None and stage_status.StatusID == complete_status_id:
+            skipped.append({"file_id": file_id, "reason": f"{process_type.ProcessTypeName} is already Complete for this file"})
+            continue
+
+        # Check stage-order gating (previous stage must be Complete)
+        previous_process_type = db.scalar(
+            select(ProcessType)
+            .where(ProcessType.IsActive == True, ProcessType.SortOrder < process_type.SortOrder)  # noqa: E712
+            .order_by(ProcessType.SortOrder.desc())
+        )
+        if previous_process_type is not None:
+            previous_status = db.scalar(
+                select(FileProcessStatus).where(
+                    FileProcessStatus.FileID == file_id, FileProcessStatus.ProcessTypeID == previous_process_type.ProcessTypeID
+                )
+            )
+            if previous_status is None or previous_status.StatusID != complete_status_id:
+                skipped.append(
+                    {"file_id": file_id, "reason": f"{previous_process_type.ProcessTypeName} must be Complete before {process_type.ProcessTypeName} can be assigned"}
+                )
+                continue
+
+        # All validations passed - assign the file
+        try:
+            result = assign_file_process(db, file_id, request.process_type_id, request.user_id)
+            updated += 1
+        except (FileLockedError, TransferVerificationError, ValueError, OSError) as exc:
+            skipped.append({"file_id": file_id, "reason": str(exc)})
+            continue
+
+    return {"updated": updated, "skipped": skipped}
 
 
 @router.post("/move-category")
