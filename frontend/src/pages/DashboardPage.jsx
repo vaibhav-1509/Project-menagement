@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import FilterBar from '../components/FilterBar'
 import FilesGrid from '../components/FilesGrid'
 import AssignModal from '../components/AssignModal'
+import AssignSelectedModal from '../components/AssignSelectedModal'
 import FailAssignmentModal from '../components/FailAssignmentModal'
 import RejectModal from '../components/RejectModal'
 import FileHistoryModal from '../components/FileHistoryModal'
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState([])
   const [moveOpen, setMoveOpen] = useState(false)
+  const [assignOpen, setAssignOpen] = useState(false)
 
   const loadFiles = useCallback(async (activeFilters) => {
     try {
@@ -178,6 +180,23 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleAssignBulk(fileIds, userId, processTypeId) {
+    setWarning('')
+    try {
+      const result = await api.assignBulk(fileIds, userId, processTypeId)
+      if (result?.warning) setWarning(result.warning)
+      if (result?.skipped?.length) {
+        const reasons = result.skipped.map((s) => `${s.file_id}: ${s.reason}`).join('; ')
+        setError(`Some files were skipped: ${reasons}`)
+      }
+      await loadFiles(filters)
+    } catch (err) {
+      setError(err.message || 'Failed to assign files')
+    } finally {
+      setAssignOpen(false)
+    }
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -192,7 +211,10 @@ export default function DashboardPage() {
             <FilterBar filters={filters} onChange={setFilters} lookups={lookups} users={users} isAdmin={isAdmin} />
           </div>
           {isAdmin && selectedFiles.length > 0 && (
-            <button onClick={() => setMoveOpen(true)}>Move Selected ({selectedFiles.length})</button>
+            <div className="bulk-actions">
+              <button onClick={() => setMoveOpen(true)}>Move Selected ({selectedFiles.length})</button>
+              <button onClick={() => setAssignOpen(true)}>Assign Selected ({selectedFiles.length})</button>
+            </div>
           )}
         </div>
         {error && <div className="error-banner">{error}</div>}
@@ -264,6 +286,16 @@ export default function DashboardPage() {
           onMovePhase={api.movePhase}
           onDone={() => loadFiles(filters)}
           onClose={() => setMoveOpen(false)}
+        />
+      )}
+
+      {assignOpen && (
+        <AssignSelectedModal
+          selectedFiles={selectedFiles}
+          users={users}
+          lookups={lookups}
+          onAssign={handleAssignBulk}
+          onClose={() => setAssignOpen(false)}
         />
       )}
     </div>

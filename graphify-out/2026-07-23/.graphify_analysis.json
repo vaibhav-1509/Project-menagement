@@ -1,0 +1,949 @@
+{
+  "communities": {
+    "0": [
+      "plan_admin_correction",
+      "plan_assignment_workflow",
+      "plan_completion_workflow",
+      "plan_phase_paths_settings",
+      "plan_safe_transfer_pipeline",
+      "plan_task_assignments_table",
+      "planning_audit_trail_table",
+      "planning_categories_lookup",
+      "planning_copy_verify_delete",
+      "planning_crash_recovery",
+      "planning_data_safety_rule",
+      "planning_durable_state_machine",
+      "planning_file_statuses_lookup",
+      "planning_file_transfer_log",
+      "planning_file_transfer_service",
+      "planning_file_versions_table",
+      "planning_files_table",
+      "planning_final_data_management",
+      "planning_four_final_folders",
+      "planning_import_batches_table",
+      "planning_phase_paths_table",
+      "planning_phases_lookup",
+      "planning_schema_3nf",
+      "planning_shutil_copytree",
+      "planning_shutil_rmtree",
+      "planning_smb_folder_convention",
+      "planning_subcategories_lookup",
+      "planning_three_phase_pipeline",
+      "planning_users_table"
+    ],
+    "1": [
+      "frontend_package",
+      "frontend_package_dependencies",
+      "frontend_package_dependencies_ag_grid_community",
+      "frontend_package_dependencies_ag_grid_react",
+      "frontend_package_dependencies_react",
+      "frontend_package_dependencies_react_dom",
+      "frontend_package_dependencies_react_router_dom",
+      "frontend_package_dependencies_recharts",
+      "frontend_package_devdependencies",
+      "frontend_package_devdependencies_oxlint",
+      "frontend_package_devdependencies_types_react",
+      "frontend_package_devdependencies_types_react_dom",
+      "frontend_package_devdependencies_vite",
+      "frontend_package_devdependencies_vitejs_plugin_react",
+      "frontend_package_name",
+      "frontend_package_private",
+      "frontend_package_scripts",
+      "frontend_package_scripts_build",
+      "frontend_package_scripts_dev",
+      "frontend_package_scripts_lint",
+      "frontend_package_scripts_preview",
+      "frontend_package_type",
+      "frontend_package_version"
+    ],
+    "2": [
+      "app_database",
+      "app_database_get_db",
+      "app_routers_audit_trail_py_session",
+      "app_routers_audit_trail_py_user",
+      "app_routers_process_types_py_session",
+      "app_routers_process_types_py_updatetaxonomynoderequest",
+      "app_routers_process_types_py_user",
+      "audittrailfilterparams",
+      "createprocesstyperequest",
+      "reorderprocesstypesrequest",
+      "routers_admin",
+      "routers_audit_trail",
+      "routers_audit_trail_list_audit_trail",
+      "routers_lookups",
+      "routers_process_types",
+      "routers_process_types_create_process_type",
+      "routers_process_types_delete_process_type",
+      "routers_process_types_list_process_types",
+      "routers_process_types_reorder_process_types",
+      "routers_process_types_update_process_type"
+    ],
+    "3": [
+      "app_routers_taxonomy_py_session",
+      "app_routers_taxonomy_py_updatetaxonomynoderequest",
+      "app_routers_taxonomy_py_user",
+      "createcategoryrequest",
+      "createphaserequest",
+      "createsubcategoryrequest",
+      "routers_taxonomy",
+      "routers_taxonomy_create_category",
+      "routers_taxonomy_create_phase",
+      "routers_taxonomy_create_subcategory",
+      "routers_taxonomy_delete_category",
+      "routers_taxonomy_delete_phase",
+      "routers_taxonomy_delete_subcategory",
+      "routers_taxonomy_get_taxonomy",
+      "routers_taxonomy_rationale_29",
+      "routers_taxonomy_update_category",
+      "routers_taxonomy_update_phase",
+      "routers_taxonomy_update_subcategory"
+    ],
+    "4": [
+      "agents_create_database",
+      "agents_deploy_ps1",
+      "agents_env_file",
+      "agents_schema_sql",
+      "agents_venv",
+      "frontend_index_favicon_svg",
+      "frontend_index_html",
+      "planning_config_py",
+      "planning_deactivate_hides_from_dropdowns",
+      "planning_env_example",
+      "planning_frontend_src_main",
+      "planning_migration_script",
+      "planning_phase_scoped_categories",
+      "planning_setup_ps1",
+      "planning_taxonomy_management",
+      "planning_taxonomy_page"
+    ],
+    "5": [
+      "app_routers_admin_py_session",
+      "app_routers_admin_py_user",
+      "assignrequest",
+      "movecategoryrequest",
+      "movephaserequest",
+      "routers_admin_assign",
+      "routers_admin_delete_file",
+      "routers_admin_move_category",
+      "routers_admin_move_phase",
+      "routers_admin_rationale_101",
+      "routers_admin_rationale_130",
+      "routers_admin_rationale_32",
+      "routers_admin_rationale_48",
+      "routers_admin_set_file_active",
+      "setactiverequest"
+    ],
+    "6": [
+      "agents_ag_grid",
+      "agents_cleanup_ps1",
+      "agents_recharts",
+      "agents_sql_server",
+      "agents_tde_backup",
+      "agents_vite",
+      "planning_files_grid",
+      "planning_filter_bar",
+      "planning_move_files_modal",
+      "project_management_production_tracker",
+      "requirements_fastapi",
+      "requirements_pyodbc",
+      "requirements_sqlalchemy"
+    ],
+    "7": [
+      "plan_admin_command_center",
+      "plan_report_sql_views",
+      "plan_role_dropdown_restriction",
+      "planning_command_center_ui",
+      "planning_import_modal",
+      "planning_rbac",
+      "planning_role_scoped_grid",
+      "planning_roles_lookup",
+      "requirements_matplotlib",
+      "requirements_openpyxl",
+      "requirements_reportlab"
+    ],
+    "8": [
+      "app_routers_filesystem_py_user",
+      "basemodel",
+      "routers_filesystem",
+      "routers_filesystem_browse_folders",
+      "routers_filesystem_browsefoldersout",
+      "routers_filesystem_folderentry",
+      "routers_filesystem_list_shares",
+      "routers_filesystem_local_drive_roots",
+      "routers_filesystem_rationale_40",
+      "routers_filesystem_rationale_84"
+    ],
+    "9": [
+      "frontend_oxlintrc",
+      "frontend_oxlintrc_plugins",
+      "frontend_oxlintrc_rules",
+      "frontend_oxlintrc_rules_react_only_export_components",
+      "frontend_oxlintrc_rules_react_rules_of_hooks",
+      "frontend_oxlintrc_schema"
+    ],
+    "10": [
+      "planning_admin_router",
+      "planning_api_routers",
+      "planning_change_password_modal",
+      "planning_last_admin_protection",
+      "planning_users_page",
+      "planning_users_router"
+    ],
+    "11": [
+      "app_routers_lookups_py_session",
+      "app_routers_lookups_py_user",
+      "routers_lookups_get_lookups",
+      "routers_lookups_rationale_15"
+    ],
+    "12": [
+      "plan_csv_import_workflow",
+      "planning_csv_import_service",
+      "planning_manual_import",
+      "requirements_pandas"
+    ],
+    "13": [
+      "planning_api_client",
+      "planning_auth_context",
+      "planning_jwt_auth",
+      "requirements_python_jose"
+    ],
+    "14": [
+      "agents_dev_proxy",
+      "agents_dev_ps1",
+      "planning_vite_config"
+    ],
+    "15": [
+      "agents_frontend_dist",
+      "planning_single_process_production",
+      "planning_spa_catch_all_route"
+    ],
+    "16": [
+      "agents_oxlint",
+      "frontend_readme_oxlint"
+    ],
+    "17": [
+      "planning_backup_strategy",
+      "planning_three_way_backup"
+    ],
+    "18": [
+      "planning_create_admin_script",
+      "planning_sp_create_first_admin"
+    ],
+    "19": [
+      "requirements_bcrypt",
+      "requirements_passlib"
+    ],
+    "20": [
+      "agents_app_directory"
+    ],
+    "21": [
+      "agents_draco_directory"
+    ],
+    "22": [
+      "agents_frontend_directory"
+    ],
+    "23": [
+      "agents_node_modules"
+    ],
+    "24": [
+      "agents_scripts_directory"
+    ],
+    "25": [
+      "agents_sql_directory"
+    ],
+    "26": [
+      "api_client_addmyleave"
+    ],
+    "27": [
+      "api_client_adduserleave"
+    ],
+    "28": [
+      "api_client_adminresetpassword"
+    ],
+    "29": [
+      "api_client_approvefile"
+    ],
+    "30": [
+      "api_client_assignfile"
+    ],
+    "31": [
+      "api_client_browsefolders"
+    ],
+    "32": [
+      "api_client_cancelmyleave"
+    ],
+    "33": [
+      "api_client_changepassword"
+    ],
+    "34": [
+      "api_client_commitimport"
+    ],
+    "35": [
+      "api_client_completeassignment"
+    ],
+    "36": [
+      "api_client_createcategory"
+    ],
+    "37": [
+      "api_client_createphase"
+    ],
+    "38": [
+      "api_client_createprocesstype"
+    ],
+    "39": [
+      "api_client_createsubcategory"
+    ],
+    "40": [
+      "api_client_createuser"
+    ],
+    "41": [
+      "api_client_decodejwt"
+    ],
+    "42": [
+      "api_client_deletecategory"
+    ],
+    "43": [
+      "api_client_deletefile"
+    ],
+    "44": [
+      "api_client_deletephase"
+    ],
+    "45": [
+      "api_client_deleteprocesstype"
+    ],
+    "46": [
+      "api_client_deletesubcategory"
+    ],
+    "47": [
+      "api_client_deleteuser"
+    ],
+    "48": [
+      "api_client_deleteuserleave"
+    ],
+    "49": [
+      "api_client_exportreportexcel"
+    ],
+    "50": [
+      "api_client_exportreportpdf"
+    ],
+    "51": [
+      "api_client_failassignment"
+    ],
+    "52": [
+      "api_client_getadminworkboard"
+    ],
+    "53": [
+      "api_client_getaudittrail"
+    ],
+    "54": [
+      "api_client_getcalendarday"
+    ],
+    "55": [
+      "api_client_getcalendarmonth"
+    ],
+    "56": [
+      "api_client_getcompletionsreport"
+    ],
+    "57": [
+      "api_client_getfiles"
+    ],
+    "58": [
+      "api_client_getlookups"
+    ],
+    "59": [
+      "api_client_getme"
+    ],
+    "60": [
+      "api_client_getmyleave"
+    ],
+    "61": [
+      "api_client_getnotifications"
+    ],
+    "62": [
+      "api_client_getprocesshistory"
+    ],
+    "63": [
+      "api_client_getprocesstypes"
+    ],
+    "64": [
+      "api_client_getprofile"
+    ],
+    "65": [
+      "api_client_getrepairsreport"
+    ],
+    "66": [
+      "api_client_getreportsdetail"
+    ],
+    "67": [
+      "api_client_getsettings"
+    ],
+    "68": [
+      "api_client_gettaxonomyadmin"
+    ],
+    "69": [
+      "api_client_gettaxonomyprogressreport"
+    ],
+    "70": [
+      "api_client_gettoken"
+    ],
+    "71": [
+      "api_client_getuserleave"
+    ],
+    "72": [
+      "api_client_getusername"
+    ],
+    "73": [
+      "api_client_getusers"
+    ],
+    "74": [
+      "api_client_getworkerprocesspaths"
+    ],
+    "75": [
+      "api_client_login"
+    ],
+    "76": [
+      "api_client_logout"
+    ],
+    "77": [
+      "api_client_markallnotificationsread"
+    ],
+    "78": [
+      "api_client_marknotificationread"
+    ],
+    "79": [
+      "api_client_movecategory"
+    ],
+    "80": [
+      "api_client_movephase"
+    ],
+    "81": [
+      "api_client_previewimport"
+    ],
+    "82": [
+      "api_client_rejectfile"
+    ],
+    "83": [
+      "api_client_renamecategory"
+    ],
+    "84": [
+      "api_client_renamephase"
+    ],
+    "85": [
+      "api_client_renameprocesstype"
+    ],
+    "86": [
+      "api_client_renamesubcategory"
+    ],
+    "87": [
+      "api_client_reopenfile"
+    ],
+    "88": [
+      "api_client_reorderprocesstypes"
+    ],
+    "89": [
+      "api_client_resetfile"
+    ],
+    "90": [
+      "api_client_revokefile"
+    ],
+    "91": [
+      "api_client_setcategoryactive"
+    ],
+    "92": [
+      "api_client_setfileactive"
+    ],
+    "93": [
+      "api_client_setphaseactive"
+    ],
+    "94": [
+      "api_client_setprocesstypeactive"
+    ],
+    "95": [
+      "api_client_setsubcategoryactive"
+    ],
+    "96": [
+      "api_client_settoken"
+    ],
+    "97": [
+      "api_client_setuseractive"
+    ],
+    "98": [
+      "api_client_setworkerprocesspaths"
+    ],
+    "99": [
+      "api_client_updateavailability"
+    ],
+    "100": [
+      "api_client_updatepriority"
+    ],
+    "101": [
+      "api_client_updatesettings"
+    ],
+    "102": [
+      "api_client_updateuser"
+    ],
+    "103": [
+      "app_init"
+    ],
+    "104": [
+      "components_assignmodal_assignmodal"
+    ],
+    "105": [
+      "components_changepasswordmodal_changepasswordmodal"
+    ],
+    "106": [
+      "components_comboselect_comboselect"
+    ],
+    "107": [
+      "components_createusermodal_createusermodal"
+    ],
+    "108": [
+      "components_daterangecalendar_daterangecalendar"
+    ],
+    "109": [
+      "components_editusermodal_editusermodal"
+    ],
+    "110": [
+      "components_failassignmentmodal_failassignmentmodal"
+    ],
+    "111": [
+      "components_filehistorymodal_filehistorymodal"
+    ],
+    "112": [
+      "components_filesgrid_filesgrid"
+    ],
+    "113": [
+      "components_filterbar_filterbar"
+    ],
+    "114": [
+      "components_folderbrowsermodal_folderbrowsermodal"
+    ],
+    "115": [
+      "components_importmodal_importmodal"
+    ],
+    "116": [
+      "components_modal_modal"
+    ],
+    "117": [
+      "components_movefilesmodal_movefilesmodal"
+    ],
+    "118": [
+      "components_notificationbell_notificationbell"
+    ],
+    "119": [
+      "components_rejectmodal_rejectmodal"
+    ],
+    "120": [
+      "components_resetpasswordmodal_resetpasswordmodal"
+    ],
+    "121": [
+      "components_rolecheckboxgroup_rolecheckboxgroup"
+    ],
+    "122": [
+      "components_searchbox_searchbox"
+    ],
+    "123": [
+      "components_sidebar_sidebar"
+    ],
+    "124": [
+      "context_authcontext_authprovider"
+    ],
+    "125": [
+      "context_authcontext_useauth"
+    ],
+    "126": [
+      "frontend_readme_react_compiler"
+    ],
+    "127": [
+      "frontend_readme_react_vite"
+    ],
+    "128": [
+      "pages_audittrailpage_audittrailpage"
+    ],
+    "129": [
+      "pages_browsefilespage_browsefilespage"
+    ],
+    "130": [
+      "pages_calendarpage_calendarpage"
+    ],
+    "131": [
+      "pages_dashboardpage_dashboardpage"
+    ],
+    "132": [
+      "pages_loginpage_loginpage"
+    ],
+    "133": [
+      "pages_processtypespage_processtypespage"
+    ],
+    "134": [
+      "pages_profilepage_profilepage"
+    ],
+    "135": [
+      "pages_reportspage_reportspage"
+    ],
+    "136": [
+      "pages_taxonomypage_taxonomypage"
+    ],
+    "137": [
+      "pages_userspage_userspage"
+    ],
+    "138": [
+      "pages_workboardpage_workboardpage"
+    ],
+    "139": [
+      "pkg_project_management_tool"
+    ],
+    "140": [
+      "planning_dashboard_page"
+    ],
+    "141": [
+      "planning_login_page"
+    ],
+    "142": [
+      "planning_pyproject_toml"
+    ],
+    "143": [
+      "planning_reset_password_script"
+    ],
+    "144": [
+      "reports_chartcolors_usecharttheme"
+    ],
+    "145": [
+      "reports_chartcolors_useisdarkmode"
+    ],
+    "146": [
+      "reports_comparisonpiechart_comparisonpiechart"
+    ],
+    "147": [
+      "reports_exportreportmodal_exportreportmodal"
+    ],
+    "148": [
+      "reports_monthbarchart_monthbarchart"
+    ],
+    "149": [
+      "reports_taxonomycompletionpie_taxonomycompletionpie"
+    ],
+    "150": [
+      "reports_weekbarchart_weekbarchart"
+    ],
+    "151": [
+      "reports_workedfilestable_workedfilestable"
+    ],
+    "152": [
+      "routers_init"
+    ],
+    "153": [
+      "services_init"
+    ],
+    "154": [
+      "src_app_app"
+    ],
+    "155": [
+      "utils_eligibleworkers_eligibleworkers"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07881773399014778,
+    "1": 0.08695652173913043,
+    "2": 0.1631578947368421,
+    "3": 0.24183006535947713,
+    "4": 0.13333333333333333,
+    "5": 0.17142857142857143,
+    "6": 0.15384615384615385,
+    "7": 0.18181818181818182,
+    "8": 0.35555555555555557,
+    "9": 0.3333333333333333,
+    "10": 0.3333333333333333,
+    "11": 0.5,
+    "12": 0.5,
+    "13": 0.5,
+    "14": 0.6666666666666666,
+    "15": 0.6666666666666666,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0,
+    "105": 1.0,
+    "106": 1.0,
+    "107": 1.0,
+    "108": 1.0,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 1.0,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 1.0,
+    "116": 1.0,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 1.0,
+    "121": 1.0,
+    "122": 1.0,
+    "123": 1.0,
+    "124": 1.0,
+    "125": 1.0,
+    "126": 1.0,
+    "127": 1.0,
+    "128": 1.0,
+    "129": 1.0,
+    "130": 1.0,
+    "131": 1.0,
+    "132": 1.0,
+    "133": 1.0,
+    "134": 1.0,
+    "135": 1.0,
+    "136": 1.0,
+    "137": 1.0,
+    "138": 1.0,
+    "139": 1.0,
+    "140": 1.0,
+    "141": 1.0,
+    "142": 1.0,
+    "143": 1.0,
+    "144": 1.0,
+    "145": 1.0,
+    "146": 1.0,
+    "147": 1.0,
+    "148": 1.0,
+    "149": 1.0,
+    "150": 1.0,
+    "151": 1.0,
+    "152": 1.0,
+    "153": 1.0,
+    "154": 1.0,
+    "155": 1.0
+  },
+  "gods": [
+    {
+      "id": "planning_schema_3nf",
+      "label": "3NF Database Schema",
+      "degree": 14
+    },
+    {
+      "id": "app_routers_taxonomy_py_user",
+      "label": "User",
+      "degree": 10
+    },
+    {
+      "id": "app_routers_taxonomy_py_session",
+      "label": "Session",
+      "degree": 10
+    },
+    {
+      "id": "planning_copy_verify_delete",
+      "label": "Copy-Verify-Delete Transfer Pattern",
+      "degree": 10
+    },
+    {
+      "id": "project_management_production_tracker",
+      "label": "Production Tracker for 3D Asset Pipelines",
+      "degree": 8
+    },
+    {
+      "id": "routers_filesystem_browse_folders",
+      "label": "browse_folders()",
+      "degree": 7
+    },
+    {
+      "id": "app_database_get_db",
+      "label": "get_db()",
+      "degree": 6
+    },
+    {
+      "id": "routers_admin_set_file_active",
+      "label": "set_file_active()",
+      "degree": 5
+    },
+    {
+      "id": "app_routers_admin_py_user",
+      "label": "User",
+      "degree": 5
+    },
+    {
+      "id": "app_routers_admin_py_session",
+      "label": "Session",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Assignment Workflow (Copy-Verify-Delete)",
+      "target": "Copy-Verify-Delete Transfer Pattern",
+      "source_files": [
+        "plan.md",
+        "planning.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Assignment Workflow (Copy-Verify-Delete)` unexpectedly reaches hub `Copy-Verify-Delete Transfer Pattern`"
+    },
+    {
+      "source": "Safe-Transfer Pipeline",
+      "target": "Copy-Verify-Delete Transfer Pattern",
+      "source_files": [
+        "plan.md",
+        "planning.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Safe-Transfer Pipeline` unexpectedly reaches hub `Copy-Verify-Delete Transfer Pattern`"
+    },
+    {
+      "source": "Admin Command Center (Dashboard + Grid)",
+      "target": "Command Center UI",
+      "source_files": [
+        "plan.md",
+        "planning.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `Admin Command Center (Dashboard + Grid)` unexpectedly reaches hub `Command Center UI`"
+    },
+    {
+      "source": "Production Tracker for 3D Asset Pipelines",
+      "target": "AG Grid (Data Grid Component)",
+      "source_files": [
+        "README.md",
+        "AGENTS.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `AG Grid (Data Grid Component)` unexpectedly reaches hub `Production Tracker for 3D Asset Pipelines`"
+    },
+    {
+      "source": "Production Tracker for 3D Asset Pipelines",
+      "target": "Recharts (Reporting Charts Library)",
+      "source_files": [
+        "README.md",
+        "AGENTS.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `Recharts (Reporting Charts Library)` unexpectedly reaches hub `Production Tracker for 3D Asset Pipelines`"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `3NF Database Schema` connect `Community 0` to `Community 7`?",
+      "why": "High betweenness centrality (0.013) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `get_db()` connect `Community 2` to `Community 3`?",
+      "why": "High betweenness centrality (0.011) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Production Tracker for 3D Asset Pipelines` connect `Community 6` to `Community 0`?",
+      "why": "High betweenness centrality (0.010) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `Copy-Verify-Delete Transfer Pattern` (e.g. with `Assignment Workflow (Copy-Verify-Delete)` and `Safe-Transfer Pipeline`) actually correct?",
+      "why": "`Copy-Verify-Delete Transfer Pattern` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `SetActiveRequest`, `AssignRequest`, `MoveCategoryRequest` to the rest of the system?",
+      "why": "236 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07881773399014778 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

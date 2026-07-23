@@ -327,6 +327,12 @@ class MovePhaseRequest(BaseModel):
     phase_id: int
 
 
+class BulkAssignRequest(BaseModel):
+    file_ids: list[int]
+    user_id: int
+    process_type_id: int
+
+
 class ProcessTypeAdminOut(BaseModel):
     id: int
     name: str

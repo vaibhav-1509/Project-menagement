@@ -162,6 +162,13 @@ export function assignFile(fileId, userId, processTypeId) {
   })
 }
 
+export function assignBulk(fileIds, userId, processTypeId) {
+  return request(`/admin/files/bulk-assign`, {
+    method: 'POST',
+    body: { file_ids: fileIds, user_id: userId, process_type_id: processTypeId },
+  })
+}
+
 export function resetFile(fileId, processTypeId) {
   return request(`/admin/files/${fileId}/reset?process_type_id=${processTypeId}`, { method: 'POST' })
 }
